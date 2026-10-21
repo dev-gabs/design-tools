@@ -78,7 +78,7 @@ export const ChromalabHub: React.FC<ChromalabHubProps> = ({
   });
 
   return (
-    <div className="min-h-screen w-full bg-[#FBFBFE] text-[#17172A] flex flex-col selection:bg-[#DCD4FF] selection:text-[#5B3DB5] relative">
+    <div className="h-screen overflow-y-auto w-full bg-[#FBFBFE] text-[#17172A] flex flex-col selection:bg-[#DCD4FF] selection:text-[#5B3DB5] relative">
       {/* Ambient background decoration */}
       <div className="absolute top-0 inset-x-0 h-96 ambient-hero-glow pointer-events-none" />
       <div className="absolute top-0 right-0 w-96 h-96 bg-dotted-grid opacity-60 pointer-events-none" />
