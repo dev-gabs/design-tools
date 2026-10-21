@@ -99,25 +99,25 @@ export const ChromalabHub: React.FC<ChromalabHubProps> = ({
 
         {/* Search & Actions Header */}
         <div className="flex items-center gap-2 max-w-lg w-full justify-end">
-          <div className="relative w-full max-w-[180px] hidden sm:block">
+          <div className="relative hidden sm:block">
             <Search className="w-3.5 h-3.5 text-[#85869A] absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               placeholder="Filtrar..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-[#F4F5FA] hover:bg-white focus:bg-white border border-[#E7E7F0] focus:border-[#7655D9] rounded-xl pl-8 pr-3 py-1.5 text-xs text-[#17172A] placeholder:text-[#85869A] focus:outline-none transition-all shadow-2xs"
+              className="h-8 w-44 bg-[#F4F5FA] hover:bg-white focus:bg-white border border-[#E7E7F0] focus:border-[#7655D9] rounded-xl pl-8 pr-3 text-xs text-[#17172A] placeholder:text-[#85869A] focus:outline-none transition-all shadow-2xs"
             />
           </div>
 
           {/* Quick Command Palette Button */}
           <button
             onClick={onOpenCommandPalette}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 bg-[#F4F5FA] hover:bg-[#F5F2FF] border border-[#E7E7F0] hover:border-[#D6D1F3] rounded-xl text-xs text-[#62647A] transition-all cursor-pointer"
+            className="h-8 flex items-center gap-1.5 px-2.5 bg-[#F4F5FA] hover:bg-[#F5F2FF] border border-[#E7E7F0] hover:border-[#D6D1F3] rounded-xl text-xs text-[#62647A] transition-all cursor-pointer whitespace-nowrap shrink-0"
             title="Abrir Paleta de Comandos (Ctrl+K)"
           >
             <span className="hidden md:inline">Comandos</span>
-            <kbd className="px-1.5 py-0.2 font-mono text-[10px] text-[#7655D9] bg-white border border-[#D6D1F3] rounded">
+            <kbd className="px-1.5 font-mono text-[10px] leading-5 text-[#7655D9] bg-white border border-[#D6D1F3] rounded">
               Ctrl K
             </kbd>
           </button>
@@ -126,10 +126,10 @@ export const ChromalabHub: React.FC<ChromalabHubProps> = ({
           {isInstallable && (
             <button
               onClick={promptInstall}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-[#7655D9] hover:bg-[#5B3DB5] text-white rounded-xl text-xs font-semibold shadow-sm shadow-[#7655D9]/20 transition-all cursor-pointer animate-fade-in"
+              className="h-8 flex items-center gap-1.5 px-3 bg-[#7655D9] hover:bg-[#5B3DB5] text-white rounded-xl text-xs font-semibold shadow-sm shadow-[#7655D9]/20 transition-all cursor-pointer animate-fade-in whitespace-nowrap shrink-0"
               title="Instalar Chromalab no Computador"
             >
-              <Download className="w-3.5 h-3.5" />
+              <Download className="w-3.5 h-3.5 shrink-0" />
               <span className="hidden lg:inline">Instalar App</span>
             </button>
           )}
@@ -137,7 +137,7 @@ export const ChromalabHub: React.FC<ChromalabHubProps> = ({
           {/* Author Showcase Pill */}
           <button
             onClick={onOpenAbout}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-[#EEF2FF] hover:bg-[#DCD4FF]/50 border border-[#D6D1F3] rounded-xl text-xs font-semibold text-[#7655D9] transition-all cursor-pointer"
+            className="h-8 flex items-center gap-1.5 px-3 bg-[#EEF2FF] hover:bg-[#DCD4FF]/50 border border-[#D6D1F3] rounded-xl text-xs font-semibold text-[#7655D9] transition-all cursor-pointer whitespace-nowrap shrink-0"
           >
             <span>Gabriel</span>
             <span className="text-[10px] font-mono opacity-70 hidden md:inline">@dev-gabs</span>
