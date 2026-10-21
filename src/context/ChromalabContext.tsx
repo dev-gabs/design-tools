@@ -17,6 +17,8 @@ interface ChromalabContextType {
   pendingPatternColors: { primary: string; secondary: string; background: string } | null;
   consumePendingPatternColors: () => { primary: string; secondary: string; background: string } | null;
   showToast: (type: 'success' | 'error' | 'info', title: string, message?: string) => void;
+  isInstallable: boolean;
+  promptInstall: () => void;
 }
 
 const DEFAULT_PALETTE = ['#4F46E5', '#06B6D4', '#10B981', '#F59E0B', '#EC4899'];
@@ -168,6 +170,40 @@ export const ChromalabProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     return colors;
   }, [pendingPatternColors]);
 
+  // PWA beforeinstallprompt handler
+  interface BeforeInstallPromptEvent extends Event {
+    prompt: () => Promise<void>;
+    userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+  }
+
+  const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [isInstallable, setIsInstallable] = useState(false);
+
+  useEffect(() => {
+    const handleBeforeInstall = (e: Event) => {
+      e.preventDefault();
+      setInstallPrompt(e as BeforeInstallPromptEvent);
+      setIsInstallable(true);
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstall);
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+  }, []);
+
+  const promptInstall = useCallback(() => {
+    if (!installPrompt) {
+      showToast('info', 'Instalação PWA', 'Abra o menu do seu navegador ou a barra de endereços para instalar o Chromalab.');
+      return;
+    }
+    installPrompt.prompt();
+    installPrompt.userChoice.then((choiceResult) => {
+      if (choiceResult.outcome === 'accepted') {
+        showToast('success', 'App Instalado com Sucesso!', 'Chromalab agora está disponível na sua área de trabalho.');
+        setIsInstallable(false);
+      }
+      setInstallPrompt(null);
+    });
+  }, [installPrompt, showToast]);
+
   return (
     <ChromalabContext.Provider
       value={{
@@ -185,6 +221,8 @@ export const ChromalabProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         pendingPatternColors,
         consumePendingPatternColors,
         showToast,
+        isInstallable,
+        promptInstall,
       }}
     >
       {children}

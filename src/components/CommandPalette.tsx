@@ -13,6 +13,7 @@ import {
   Info,
   ExternalLink,
   Code2,
+  Download,
 } from 'lucide-react';
 import { useChromalab } from '../context/ChromalabContext';
 
@@ -37,7 +38,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   onClose,
   onOpenAbout,
 }) => {
-  const { navigateToTool, showToast } = useChromalab();
+  const { navigateToTool, showToast, promptInstall, isInstallable } = useChromalab();
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -124,6 +125,15 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       icon: <Maximize2 className="w-4 h-4 text-[#8EA5FF]" />,
       badge: 'F11',
       action: toggleFullscreen,
+    },
+    {
+      id: 'action-install-pwa',
+      title: 'Instalar Aplicativo no Computador (PWA)',
+      subtitle: 'Executar Chromalab como app desktop nativo com suporte offline',
+      category: 'Ações Rápidas',
+      icon: <Download className="w-4 h-4 text-[#7655D9]" />,
+      badge: isInstallable ? 'Instalar' : 'PWA',
+      action: promptInstall,
     },
     {
       id: 'action-export-css',

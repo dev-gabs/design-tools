@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   Sparkles,
   Palette,
@@ -12,6 +12,8 @@ import {
   Plus,
   ArrowRightLeft,
   SunMedium,
+  Image as ImageIcon,
+  Upload,
 } from 'lucide-react';
 import type { MeshPoint, Preset, GlobalEngineSettings } from '../types/mesh';
 import { GRADIENT_PRESETS } from '../presets/gradient-presets';
@@ -21,6 +23,7 @@ import {
   randomizeGeometryOnly,
   subtleVariation,
 } from '../engine/generators';
+import { sampleMeshPointsFromImage } from '../engine/image-sampler';
 import {
   parseHexPalette,
   generateHarmony,
@@ -98,6 +101,31 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
     const updated = subtleVariation(points, newSeed);
     onUpdatePoints(updated);
     onShowToast('info', 'Variação Sutil Aplicada');
+  };
+
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isSamplingImage, setIsSamplingImage] = useState<boolean>(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImageFile = async (file: File) => {
+    try {
+      setIsSamplingImage(true);
+      const result = await sampleMeshPointsFromImage(file, Math.max(6, Math.min(10, points.length)));
+      setImagePreview(result.imagePreviewUrl);
+      onUpdatePoints(result.points);
+      onShowToast('success', 'Gradiente Extraído da Imagem!', 'Cores e coordenadas mapeadas a partir da foto.');
+    } catch {
+      onShowToast('error', 'Falha ao processar imagem', 'Verifique o formato do arquivo.');
+    } finally {
+      setIsSamplingImage(false);
+    }
+  };
+
+  const handleDropImage = (e: React.DragEvent) => {
+    e.preventDefault();
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleImageFile(e.dataTransfer.files[0]);
+    }
   };
 
   const handleImportHex = () => {
@@ -261,6 +289,70 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
               >
                 Variação Sutil
               </button>
+            </div>
+
+            {/* Image-to-Mesh Extraction Box */}
+            <div
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={handleDropImage}
+              className="mt-3 pt-3 border-t border-[#E7E7F0] space-y-2"
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-[#17172A] flex items-center gap-1.5">
+                  <ImageIcon className="w-3.5 h-3.5 text-[#7655D9]" />
+                  Extrair de Imagem
+                </span>
+                {imagePreview && (
+                  <button
+                    onClick={() => setImagePreview(null)}
+                    className="text-[10px] text-[#85869A] hover:text-rose-500 cursor-pointer"
+                  >
+                    Limpar
+                  </button>
+                )}
+              </div>
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  if (e.target.files && e.target.files[0]) {
+                    handleImageFile(e.target.files[0]);
+                  }
+                }}
+              />
+
+              {imagePreview ? (
+                <div className="flex items-center gap-2.5 p-2 bg-white rounded-xl border border-[#D6D1F3] shadow-2xs">
+                  <img
+                    src={imagePreview}
+                    alt="Uploaded"
+                    className="w-10 h-10 object-cover rounded-lg border border-[#E7E7F0]"
+                  />
+                  <div className="flex-1 truncate">
+                    <span className="text-[11px] font-semibold text-[#17172A] block truncate">
+                      Cores Mapeadas
+                    </span>
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      className="text-[10px] text-[#7655D9] hover:underline cursor-pointer"
+                    >
+                      Trocar foto...
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isSamplingImage}
+                  className="w-full p-2.5 bg-white hover:bg-[#F5F2FF] border border-dashed border-[#D6D1F3] hover:border-[#7655D9] rounded-xl flex items-center justify-center gap-2 text-xs text-[#62647A] hover:text-[#7655D9] transition-all cursor-pointer"
+                >
+                  <Upload className="w-3.5 h-3.5 text-[#7655D9]" />
+                  <span>{isSamplingImage ? 'Extraindo cores...' : 'Soltar foto ou carregar'}</span>
+                </button>
+              )}
             </div>
           </div>
 

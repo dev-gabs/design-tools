@@ -7,6 +7,8 @@ import {
   Grid,
   Plus,
   Lock,
+  Play,
+  Pause,
 } from 'lucide-react';
 import type { MeshPoint, Dimensions, GlobalEngineSettings } from '../types/mesh';
 import { WebGLMeshRenderer } from '../engine/webgl-renderer';
@@ -46,6 +48,12 @@ export const CanvasWorkspace: React.FC<CanvasWorkspaceProps> = ({
   const [panStart, setPanStart] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [showMeshLines, setShowMeshLines] = useState<boolean>(true);
 
+  // Organic Live Motion Animation state
+  const [isAnimating, setIsAnimating] = useState<boolean>(false);
+  const [animSpeed, setAnimSpeed] = useState<number>(1);
+  const [animatedPoints, setAnimatedPoints] = useState<MeshPoint[]>(points);
+  const animTimeRef = useRef<number>(0);
+
   // Dragging control points state
   const [draggingPointId, setDraggingPointId] = useState<string | null>(null);
   const isSpacePressed = useRef<boolean>(false);
@@ -62,18 +70,54 @@ export const CanvasWorkspace: React.FC<CanvasWorkspaceProps> = ({
     };
   }, []);
 
-  // Real-time render loop
+  // Sync points when not animating
+  useEffect(() => {
+    if (!isAnimating) {
+      setAnimatedPoints(points);
+    }
+  }, [points, isAnimating]);
+
+  // Real-time render loop with harmonic animation
   useEffect(() => {
     let animId: number;
-    const renderLoop = () => {
-      if (rendererRef.current) {
-        // Internal canvas resolution matches document dimensions
-        rendererRef.current.render(points, settings, dimensions.width, dimensions.height);
+
+    const renderLoop = (timestamp: number) => {
+      if (!isAnimating) {
+        if (rendererRef.current) {
+          rendererRef.current.render(points, settings, dimensions.width, dimensions.height);
+        }
+        return;
       }
+
+      if (!animTimeRef.current) animTimeRef.current = timestamp;
+      const elapsed = (timestamp - animTimeRef.current) * 0.001 * animSpeed;
+
+      const updated = points.map((p, idx) => {
+        if (p.locked) return p;
+        const phaseX = idx * 1.57 + 0.4;
+        const phaseY = idx * 2.14 + 1.2;
+        const offsetX = Math.sin(elapsed * 0.7 + phaseX) * 0.07 + Math.cos(elapsed * 0.25 + phaseX) * 0.03;
+        const offsetY = Math.cos(elapsed * 0.6 + phaseY) * 0.07 + Math.sin(elapsed * 0.35 + phaseY) * 0.03;
+
+        return {
+          ...p,
+          x: Math.max(0.02, Math.min(0.98, p.x + offsetX)),
+          y: Math.max(0.02, Math.min(0.98, p.y + offsetY)),
+        };
+      });
+
+      setAnimatedPoints(updated);
+
+      if (rendererRef.current) {
+        rendererRef.current.render(updated, settings, dimensions.width, dimensions.height);
+      }
+
+      animId = requestAnimationFrame(renderLoop);
     };
+
     animId = requestAnimationFrame(renderLoop);
     return () => cancelAnimationFrame(animId);
-  }, [points, settings, dimensions.width, dimensions.height]);
+  }, [isAnimating, animSpeed, points, settings, dimensions.width, dimensions.height]);
 
   // Auto-fit canvas to viewport on initial load or dimension change
   const fitToViewport = useCallback(() => {
@@ -190,6 +234,9 @@ export const CanvasWorkspace: React.FC<CanvasWorkspaceProps> = ({
   // Point handle pointer down
   const handlePointPointerDown = (e: React.PointerEvent, pt: MeshPoint) => {
     e.stopPropagation();
+    if (isAnimating) {
+      setIsAnimating(false);
+    }
     if (pt.locked) {
       onSelectPoint(pt.id, e.shiftKey);
       return;
@@ -212,17 +259,18 @@ export const CanvasWorkspace: React.FC<CanvasWorkspaceProps> = ({
 
   // Simple mesh Delaunay/proximity lines generator for topological feedback
   const renderMeshLines = () => {
-    if (!showMeshLines || cleanPreview || points.length < 2) return null;
+    const currentPoints = isAnimating ? animatedPoints : points;
+    if (!showMeshLines || cleanPreview || currentPoints.length < 2) return null;
 
     // Connect closest neighbors (K-nearest or threshold distance)
     const lines: Array<{ id: string; x1: number; y1: number; x2: number; y2: number }> = [];
-    for (let i = 0; i < points.length; i++) {
-      for (let j = i + 1; j < points.length; j++) {
-        const p1 = points[i];
-        const p2 = points[j];
+    for (let i = 0; i < currentPoints.length; i++) {
+      for (let j = i + 1; j < currentPoints.length; j++) {
+        const p1 = currentPoints[i];
+        const p2 = currentPoints[j];
         const dist = Math.hypot(p1.x - p2.x, p1.y - p2.y);
         // Draw lines between reasonably close points
-        if (dist < 0.65 || points.length <= 6) {
+        if (dist < 0.65 || currentPoints.length <= 6) {
           lines.push({
             id: `line-${p1.id}-${p2.id}`,
             x1: p1.x * dimensions.width,
@@ -294,7 +342,7 @@ export const CanvasWorkspace: React.FC<CanvasWorkspaceProps> = ({
 
         {/* Control Points Overlay */}
         {!cleanPreview &&
-          points.map((pt) => {
+          (isAnimating ? animatedPoints : points).map((pt) => {
             const isSelected = selectedPointIds.includes(pt.id);
             const isDragging = draggingPointId === pt.id;
 
@@ -383,6 +431,31 @@ export const CanvasWorkspace: React.FC<CanvasWorkspaceProps> = ({
         >
           <Minimize2 className="w-4 h-4" />
         </button>
+
+        <div className="h-4 w-[1px] bg-[#E7E7F0] mx-0.5" />
+
+        {/* Live Motion Animation Toggle */}
+        <button
+          onClick={() => setIsAnimating(!isAnimating)}
+          className={`p-1.5 rounded-lg transition-all cursor-pointer flex items-center gap-1 ${
+            isAnimating
+              ? 'text-[#7655D9] bg-[#EEF2FF] shadow-xs'
+              : 'text-[#85869A] hover:text-[#7655D9] hover:bg-[#F5F2FF]'
+          }`}
+          title={isAnimating ? 'Pausar Movimento Orgânico' : 'Iniciar Movimento Orgânico Fluido'}
+        >
+          {isAnimating ? <Pause className="w-4 h-4 text-[#7655D9]" /> : <Play className="w-4 h-4" />}
+        </button>
+
+        {isAnimating && (
+          <button
+            onClick={() => setAnimSpeed((prev) => (prev === 1 ? 1.5 : prev === 1.5 ? 2 : 1))}
+            className="px-1.5 py-0.5 text-[10px] font-mono text-[#7655D9] bg-[#EEF2FF] border border-[#D6D1F3] rounded-md cursor-pointer hover:bg-[#DCD4FF]/50 transition-colors"
+            title="Velocidade da Animação"
+          >
+            {animSpeed}x
+          </button>
+        )}
 
         <div className="h-4 w-[1px] bg-[#E7E7F0] mx-0.5" />
 

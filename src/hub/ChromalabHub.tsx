@@ -4,6 +4,7 @@ import {
   Sparkles,
   ArrowRight,
   Bookmark,
+  Download,
 } from 'lucide-react';
 import { useChromalab } from '../context/ChromalabContext';
 import type { ToolMetadata } from '../types/chromalab';
@@ -63,7 +64,7 @@ export const ChromalabHub: React.FC<ChromalabHubProps> = ({
   onOpenAbout,
   onOpenCommandPalette,
 }) => {
-  const { navigateToTool, savedPalettes } = useChromalab();
+  const { navigateToTool, savedPalettes, isInstallable, promptInstall } = useChromalab();
   const [searchQuery, setSearchQuery] = useState('');
 
   const filteredTools = TOOLS.filter((tool) => {
@@ -120,6 +121,18 @@ export const ChromalabHub: React.FC<ChromalabHubProps> = ({
               Ctrl K
             </kbd>
           </button>
+
+          {/* Install PWA Button if available */}
+          {isInstallable && (
+            <button
+              onClick={promptInstall}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-[#7655D9] hover:bg-[#5B3DB5] text-white rounded-xl text-xs font-semibold shadow-sm shadow-[#7655D9]/20 transition-all cursor-pointer animate-fade-in"
+              title="Instalar Chromalab no Computador"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span className="hidden lg:inline">Instalar App</span>
+            </button>
+          )}
 
           {/* Author Showcase Pill */}
           <button
