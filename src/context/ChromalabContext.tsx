@@ -10,6 +10,8 @@ interface ChromalabContextType {
   savedPalettes: SavedPalette[];
   savePalette: (name: string, colors: string[]) => void;
   deletePalette: (id: string) => void;
+  renamePalette: (id: string, name: string) => void;
+  duplicatePalette: (id: string) => void;
   sendPaletteToMesh: (colors: string[]) => void;
   sendPaletteToPattern: (colors: string[]) => void;
   pendingMeshPalette: string[] | null;
@@ -139,6 +141,26 @@ export const ChromalabProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     showToast('info', 'Paleta Removida');
   }, [showToast]);
 
+  const renamePalette = useCallback((id: string, name: string) => {
+    setSavedPalettes((prev) => {
+      const updated = prev.map((p) => p.id === id ? { ...p, name: name.trim() || p.name } : p);
+      try { localStorage.setItem(PALETTES_STORAGE_KEY, JSON.stringify(updated)); } catch {}
+      return updated;
+    });
+  }, []);
+
+  const duplicatePalette = useCallback((id: string) => {
+    setSavedPalettes((prev) => {
+      const original = prev.find((p) => p.id === id);
+      if (!original) return prev;
+      const copy: SavedPalette = { ...original, id: `pal-${Date.now()}`, name: `${original.name} (cópia)`, createdAt: Date.now() };
+      const updated = [copy, ...prev];
+      try { localStorage.setItem(PALETTES_STORAGE_KEY, JSON.stringify(updated)); } catch {}
+      return updated;
+    });
+    showToast('success', 'Paleta Duplicada');
+  }, [showToast]);
+
   const sendPaletteToMesh = useCallback((colors: string[]) => {
     setPendingMeshPalette([...colors]);
     setActivePalette(colors);
@@ -214,6 +236,8 @@ export const ChromalabProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         savedPalettes,
         savePalette,
         deletePalette,
+        renamePalette,
+        duplicatePalette,
         sendPaletteToMesh,
         sendPaletteToPattern,
         pendingMeshPalette,

@@ -5,6 +5,11 @@ import {
   ArrowRight,
   Bookmark,
   Download,
+  Copy,
+  Pencil,
+  Trash2,
+  Check,
+  X,
 } from 'lucide-react';
 import { useChromalab } from '../context/ChromalabContext';
 import type { ToolMetadata } from '../types/chromalab';
@@ -64,8 +69,10 @@ export const ChromalabHub: React.FC<ChromalabHubProps> = ({
   onOpenAbout,
   onOpenCommandPalette,
 }) => {
-  const { navigateToTool, savedPalettes, isInstallable, promptInstall } = useChromalab();
+  const { navigateToTool, savedPalettes, isInstallable, promptInstall, deletePalette, renamePalette, duplicatePalette } = useChromalab();
   const [searchQuery, setSearchQuery] = useState('');
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState('');
 
   const filteredTools = TOOLS.filter((tool) => {
     const q = searchQuery.toLowerCase().trim();
@@ -313,33 +320,81 @@ export const ChromalabHub: React.FC<ChromalabHubProps> = ({
           </div>
         )}
 
-        {/* Saved Palettes Mini Section if any exist */}
+        {/* Saved Palettes Section */}
         {savedPalettes.length > 0 && (
           <div className="mt-12 bg-white rounded-2xl border border-[#E7E7F0] p-6 shadow-xs">
-            <div className="flex items-center gap-2 mb-4">
-              <Bookmark className="w-4 h-4 text-[#7655D9]" />
-              <h3 className="text-sm font-bold text-[#17172A]">Paletas Guardadas</h3>
-              <span className="text-[10px] bg-[#EEF2FF] text-[#7655D9] font-mono px-2 py-0.5 rounded-full border border-[#D6D1F3]">
-                {savedPalettes.length}
-              </span>
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-2">
+                <Bookmark className="w-4 h-4 text-[#7655D9]" />
+                <h3 className="text-sm font-bold text-[#17172A]">Paletas Guardadas</h3>
+                <span className="text-[10px] bg-[#EEF2FF] text-[#7655D9] font-mono px-2 py-0.5 rounded-full border border-[#D6D1F3]">
+                  {savedPalettes.length}
+                </span>
+              </div>
+              <button
+                onClick={() => navigateToTool('palette')}
+                className="text-xs text-[#7655D9] hover:text-[#5B3DB5] font-semibold transition-colors cursor-pointer"
+              >
+                Ver todas →
+              </button>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-              {savedPalettes.slice(0, 3).map((pal) => (
+              {savedPalettes.map((pal) => (
                 <div
                   key={pal.id}
-                  onClick={() => navigateToTool('palette')}
-                  className="p-3 bg-[#F4F5FA] hover:bg-[#F5F2FF] rounded-xl border border-[#E7E7F0] hover:border-[#D6D1F3] transition-all cursor-pointer"
+                  className="p-3 bg-[#F4F5FA] hover:bg-[#F5F2FF] rounded-xl border border-[#E7E7F0] hover:border-[#D6D1F3] transition-all group"
                 >
-                  <div className="h-7 rounded-lg overflow-hidden flex mb-2 border border-[#E7E7F0]">
+                  {/* Color strip */}
+                  <div
+                    className="h-8 rounded-lg overflow-hidden flex mb-2.5 border border-[#E7E7F0] cursor-pointer"
+                    onClick={() => navigateToTool('palette')}
+                  >
                     {pal.colors.map((c, i) => (
                       <div key={i} className="flex-1 h-full" style={{ backgroundColor: c }} />
                     ))}
                   </div>
-                  <div className="text-xs font-semibold text-[#17172A] truncate">{pal.name}</div>
-                  <div className="text-[10px] text-[#85869A] mt-0.5">
-                    {new Date(pal.createdAt).toLocaleDateString()}
-                  </div>
+
+                  {/* Name row — inline edit or display */}
+                  {editingId === pal.id ? (
+                    <div className="flex items-center gap-1 mb-1">
+                      <input
+                        autoFocus
+                        value={editingName}
+                        onChange={(e) => setEditingName(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') { renamePalette(pal.id, editingName); setEditingId(null); }
+                          if (e.key === 'Escape') setEditingId(null);
+                        }}
+                        className="flex-1 text-xs font-semibold text-[#17172A] bg-white border border-[#D6D1F3] rounded-md px-2 py-1 focus:outline-none focus:border-[#7655D9]"
+                      />
+                      <button onClick={() => { renamePalette(pal.id, editingName); setEditingId(null); }} className="p-1 text-[#7655D9] hover:bg-[#EEF2FF] rounded cursor-pointer"><Check className="w-3.5 h-3.5" /></button>
+                      <button onClick={() => setEditingId(null)} className="p-1 text-[#85869A] hover:bg-[#F4F5FA] rounded cursor-pointer"><X className="w-3.5 h-3.5" /></button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between gap-1 mb-0.5">
+                      <div className="text-xs font-semibold text-[#17172A] truncate flex-1">{pal.name}</div>
+                      {/* Action buttons — visible on hover */}
+                      <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                        <button
+                          onClick={() => { setEditingId(pal.id); setEditingName(pal.name); }}
+                          className="p-1 text-[#85869A] hover:text-[#7655D9] hover:bg-[#EEF2FF] rounded cursor-pointer"
+                          title="Renomear"
+                        ><Pencil className="w-3 h-3" /></button>
+                        <button
+                          onClick={() => duplicatePalette(pal.id)}
+                          className="p-1 text-[#85869A] hover:text-[#7655D9] hover:bg-[#EEF2FF] rounded cursor-pointer"
+                          title="Duplicar"
+                        ><Copy className="w-3 h-3" /></button>
+                        <button
+                          onClick={() => deletePalette(pal.id)}
+                          className="p-1 text-[#85869A] hover:text-red-500 hover:bg-red-50 rounded cursor-pointer"
+                          title="Excluir"
+                        ><Trash2 className="w-3 h-3" /></button>
+                      </div>
+                    </div>
+                  )}
+                  <div className="text-[10px] text-[#85869A]">{new Date(pal.createdAt).toLocaleDateString()}</div>
                 </div>
               ))}
             </div>

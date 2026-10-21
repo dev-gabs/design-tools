@@ -49,6 +49,7 @@ export const ColorPaletteStudio: React.FC = () => {
     activePalette,
     setActivePalette,
     savePalette,
+    savedPalettes,
     sendPaletteToMesh,
     sendPaletteToPattern,
     showToast,
@@ -491,6 +492,36 @@ export const ColorPaletteStudio: React.FC = () => {
               </button>
             </div>
           </div>
+
+          {/* Saved Palettes — load into editor */}
+          {savedPalettes.length > 0 && (
+            <div className="pt-3 border-t border-[#E7E7F0]">
+              <div className="flex items-center justify-between mb-2.5">
+                <label className="text-xs font-semibold text-[#17172A]">Paletas Salvas</label>
+                <span className="text-[10px] bg-[#EEF2FF] text-[#7655D9] font-mono px-1.5 py-0.5 rounded-full border border-[#D6D1F3]">{savedPalettes.length}</span>
+              </div>
+              <div className="space-y-1.5">
+                {savedPalettes.map((pal) => (
+                  <button
+                    key={pal.id}
+                    onClick={() => {
+                      setSlots(pal.colors.map((hex, i) => ({ id: `slot-loaded-${i}`, hex, locked: false })));
+                      setColorCount(pal.colors.length);
+                      showToast('success', 'Paleta Carregada', `"${pal.name}" aplicada ao editor.`);
+                    }}
+                    className="w-full flex items-center gap-2 p-2 rounded-lg hover:bg-[#F5F2FF] border border-transparent hover:border-[#D6D1F3] transition-all cursor-pointer group text-left"
+                  >
+                    <div className="h-5 w-16 rounded flex overflow-hidden border border-[#E7E7F0] shrink-0">
+                      {pal.colors.map((c, i) => (
+                        <div key={i} className="flex-1 h-full" style={{ backgroundColor: c }} />
+                      ))}
+                    </div>
+                    <span className="text-xs text-[#62647A] group-hover:text-[#17172A] font-medium truncate flex-1">{pal.name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </aside>
 
         {/* Large Swatches Canvas (Center / Right) */}
