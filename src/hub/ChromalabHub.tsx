@@ -161,7 +161,7 @@ export const ChromalabHub: React.FC<ChromalabHubProps> = ({
       </section>
 
       {/* Tools Catalog Grid */}
-      <main className="px-6 md:px-12 pb-20 max-w-5xl mx-auto w-full flex-1 relative z-10">
+      <main className="px-6 md:px-12 pb-12 max-w-5xl mx-auto w-full relative z-10">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredTools.map((tool) => (
             <div
