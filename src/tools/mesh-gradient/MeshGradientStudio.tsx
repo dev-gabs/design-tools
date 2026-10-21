@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { ArrowLeft } from 'lucide-react';
 import type {
   MeshPoint,
   Dimensions,
@@ -486,21 +485,10 @@ export const MeshGradientStudio: React.FC = () => {
   ]);
 
   return (
-    <div className="flex flex-col w-screen h-screen overflow-hidden bg-zinc-950 text-zinc-100 select-none">
-      {/* Top Chromalab Return Bar */}
-      <div className="h-9 bg-zinc-900 border-b border-zinc-800/80 px-4 flex items-center justify-between text-xs text-zinc-400 shrink-0">
-        <button
-          onClick={() => navigateToTool('hub')}
-          className="flex items-center gap-1.5 text-zinc-300 hover:text-white transition-colors cursor-pointer font-medium py-1"
-        >
-          <ArrowLeft className="w-3.5 h-3.5" />
-          <span>Voltar ao Chromalab</span>
-        </button>
-        <span className="text-[11px] font-mono text-zinc-500">Módulo 01 — Mesh Gradient Studio</span>
-      </div>
-
+    <div className="flex flex-col w-screen h-screen overflow-hidden bg-zinc-50 text-zinc-900 select-none">
       {/* Top Navbar */}
       <Navbar
+        onBackToHub={() => navigateToTool('hub')}
         projectName={document.name}
         onUpdateProjectName={updateProjectName}
         dimensions={document.dimensions}

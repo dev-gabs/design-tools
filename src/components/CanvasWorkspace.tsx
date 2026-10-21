@@ -263,20 +263,20 @@ export const CanvasWorkspace: React.FC<CanvasWorkspaceProps> = ({
       onPointerMove={handleContainerPointerMove}
       onPointerUp={handleContainerPointerUp}
       onDoubleClick={handleDoubleClick}
-      className={`relative flex-1 h-full overflow-hidden bg-zinc-950 flex items-center justify-center select-none ${
+      className={`relative flex-1 h-full overflow-hidden bg-zinc-100/70 flex items-center justify-center select-none ${
         isPanning ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'
       }`}
     >
       {/* Background checkerboard for transparency preview */}
       <div
-        className="absolute inset-0 pointer-events-none opacity-20"
+        className="absolute inset-0 pointer-events-none opacity-40"
         style={{
-          backgroundImage: `linear-gradient(45deg, #27272a 25%, transparent 25%), 
-                            linear-gradient(-45deg, #27272a 25%, transparent 25%), 
-                            linear-gradient(45deg, transparent 75%, #27272a 75%), 
-                            linear-gradient(-45deg, transparent 75%, #27272a 75%)`,
-          backgroundSize: '24px 24px',
-          backgroundPosition: '0 0, 0 12px, 12px -12px, -12px 0px',
+          backgroundImage: `linear-gradient(45deg, #e4e4e7 25%, transparent 25%), 
+                            linear-gradient(-45deg, #e4e4e7 25%, transparent 25%), 
+                            linear-gradient(45deg, transparent 75%, #e4e4e7 75%), 
+                            linear-gradient(-45deg, transparent 75%, #e4e4e7 75%)`,
+          backgroundSize: '20px 20px',
+          backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px',
         }}
       />
 
@@ -289,7 +289,7 @@ export const CanvasWorkspace: React.FC<CanvasWorkspaceProps> = ({
           height: dimensions.height,
           transition: isPanning || draggingPointId ? 'none' : 'transform 0.08s ease-out',
         }}
-        className="relative shrink-0 shadow-2xl rounded-sm border border-zinc-800/80"
+        className="relative shrink-0 shadow-2xl rounded-sm border border-zinc-300"
       >
         {/* WebGL Canvas */}
         <canvas
@@ -328,8 +328,8 @@ export const CanvasWorkspace: React.FC<CanvasWorkspaceProps> = ({
                   style={{
                     backgroundColor: pt.color,
                     boxShadow: isSelected
-                      ? `0 0 0 3px #6366F1, 0 0 20px 4px ${pt.color}88, 0 4px 12px rgba(0,0,0,0.6)`
-                      : `0 0 0 2px #FFFFFF, 0 2px 8px rgba(0,0,0,0.5)`,
+                      ? `0 0 0 3px #4F46E5, 0 0 16px 3px ${pt.color}88, 0 4px 10px rgba(0,0,0,0.3)`
+                      : `0 0 0 2px #FFFFFF, 0 2px 6px rgba(0,0,0,0.25)`,
                   }}
                 >
                   {pt.locked && (
@@ -342,7 +342,7 @@ export const CanvasWorkspace: React.FC<CanvasWorkspaceProps> = ({
 
                 {/* Floating Coordinate Badge */}
                 {(isSelected || isDragging) && (
-                  <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1.5 px-2 py-0.5 bg-zinc-900/90 border border-zinc-700/80 rounded-md text-[10px] font-mono text-zinc-200 whitespace-nowrap shadow-xl pointer-events-none backdrop-blur-sm z-30">
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1.5 px-2 py-0.5 bg-zinc-900/90 border border-zinc-800 rounded-md text-[10px] font-mono text-zinc-100 whitespace-nowrap shadow-xl pointer-events-none backdrop-blur-sm z-30">
                     {Math.round(pt.x * 100)}%, {Math.round(pt.y * 100)}%
                   </div>
                 )}
@@ -352,32 +352,32 @@ export const CanvasWorkspace: React.FC<CanvasWorkspaceProps> = ({
       </div>
 
       {/* Floating Canvas Controls Toolbar (Bottom Right) */}
-      <div className="absolute bottom-5 right-5 z-20 flex items-center gap-1.5 bg-zinc-900/90 border border-zinc-800 rounded-2xl p-1.5 shadow-2xl backdrop-blur-md text-zinc-300">
+      <div className="absolute bottom-5 right-5 z-20 flex items-center gap-1.5 bg-white/90 border border-zinc-200/90 rounded-2xl p-1.5 shadow-xl backdrop-blur-md text-zinc-700">
         <button
           onClick={() => setZoom((prev) => Math.max(0.1, prev - 0.15))}
-          className="p-1.5 hover:text-white rounded-lg hover:bg-zinc-800 transition-colors"
+          className="p-1.5 hover:text-zinc-900 rounded-lg hover:bg-zinc-100 transition-colors cursor-pointer"
           title="Diminuir Zoom"
         >
           <ZoomOut className="w-4 h-4" />
         </button>
 
-        <span className="text-[11px] font-mono font-medium px-1.5 text-zinc-300 min-w-[42px] text-center">
+        <span className="text-[11px] font-mono font-semibold px-1.5 text-zinc-800 min-w-[42px] text-center">
           {Math.round(zoom * 100)}%
         </span>
 
         <button
           onClick={() => setZoom((prev) => Math.min(5.0, prev + 0.15))}
-          className="p-1.5 hover:text-white rounded-lg hover:bg-zinc-800 transition-colors"
+          className="p-1.5 hover:text-zinc-900 rounded-lg hover:bg-zinc-100 transition-colors cursor-pointer"
           title="Aumentar Zoom"
         >
           <ZoomIn className="w-4 h-4" />
         </button>
 
-        <div className="h-4 w-[1px] bg-zinc-800 mx-0.5" />
+        <div className="h-4 w-[1px] bg-zinc-200 mx-0.5" />
 
         <button
           onClick={fitToViewport}
-          className="p-1.5 hover:text-white rounded-lg hover:bg-zinc-800 transition-colors"
+          className="p-1.5 hover:text-zinc-900 rounded-lg hover:bg-zinc-100 transition-colors cursor-pointer"
           title="Ajustar à Tela"
         >
           <Maximize2 className="w-4 h-4" />
@@ -388,18 +388,18 @@ export const CanvasWorkspace: React.FC<CanvasWorkspaceProps> = ({
             setZoom(1);
             setPan({ x: 0, y: 0 });
           }}
-          className="p-1.5 hover:text-white rounded-lg hover:bg-zinc-800 transition-colors"
+          className="p-1.5 hover:text-zinc-900 rounded-lg hover:bg-zinc-100 transition-colors cursor-pointer"
           title="Zoom 100%"
         >
           <Minimize2 className="w-4 h-4" />
         </button>
 
-        <div className="h-4 w-[1px] bg-zinc-800 mx-0.5" />
+        <div className="h-4 w-[1px] bg-zinc-200 mx-0.5" />
 
         <button
           onClick={() => setShowMeshLines(!showMeshLines)}
-          className={`p-1.5 rounded-lg transition-colors ${
-            showMeshLines ? 'text-indigo-400 bg-indigo-500/10' : 'text-zinc-500 hover:text-zinc-300'
+          className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+            showMeshLines ? 'text-indigo-600 bg-indigo-50' : 'text-zinc-400 hover:text-zinc-700'
           }`}
           title="Alternar Linhas da Malha"
         >
@@ -408,7 +408,7 @@ export const CanvasWorkspace: React.FC<CanvasWorkspaceProps> = ({
 
         <button
           onClick={() => onAddPointAt(0.5, 0.5, getRandomColor())}
-          className="flex items-center gap-1 px-2.5 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold shadow-sm transition-colors cursor-pointer"
+          className="flex items-center gap-1 px-2.5 py-1 bg-zinc-900 hover:bg-zinc-800 text-white rounded-xl text-xs font-semibold shadow-sm transition-colors cursor-pointer"
           title="Adicionar Novo Ponto no Centro"
         >
           <Plus className="w-3.5 h-3.5" />
@@ -417,14 +417,14 @@ export const CanvasWorkspace: React.FC<CanvasWorkspaceProps> = ({
       </div>
 
       {/* Floating Canvas Info Badge (Bottom Left) */}
-      <div className="absolute bottom-5 left-5 z-20 flex items-center gap-2 bg-zinc-900/80 border border-zinc-800/80 rounded-xl px-3 py-1.5 shadow-lg backdrop-blur text-[11px] text-zinc-400 font-mono">
+      <div className="absolute bottom-5 left-5 z-20 flex items-center gap-2 bg-white/85 border border-zinc-200/90 rounded-xl px-3 py-1.5 shadow-md backdrop-blur text-[11px] text-zinc-600 font-mono">
         <span>{dimensions.width} × {dimensions.height} px</span>
         <span>•</span>
         <span>{points.length} pontos de cor</span>
         {cleanPreview && (
           <>
             <span>•</span>
-            <span className="text-amber-400 font-sans font-medium">Modo Apresentação (H)</span>
+            <span className="text-amber-600 font-sans font-semibold">Modo Apresentação (H)</span>
           </>
         )}
       </div>

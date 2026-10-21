@@ -137,32 +137,32 @@ export const ProjectsModal: React.FC<ProjectsModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fade-in">
-      <div className="bg-zinc-900 border border-zinc-700/80 rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden flex flex-col text-zinc-100 max-h-[85vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-900/40 backdrop-blur-sm animate-fade-in">
+      <div className="bg-white border border-zinc-200 rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden flex flex-col text-zinc-900 max-h-[85vh]">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 bg-indigo-500/10 rounded-lg text-indigo-400">
+            <div className="p-2 bg-zinc-100 rounded-lg text-zinc-800">
               <FolderOpen className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-semibold text-base">Gerenciador de Projetos</h3>
-              <p className="text-xs text-zinc-400">Salvar, carregar, duplicar e exportar composições em JSON</p>
+              <h3 className="font-semibold text-base text-zinc-900">Gerenciador de Projetos</h3>
+              <p className="text-xs text-zinc-500">Salvar, carregar, duplicar e exportar composições em JSON</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-zinc-400 hover:text-white rounded-lg hover:bg-zinc-800 transition-colors"
+            className="p-1.5 text-zinc-400 hover:text-zinc-700 rounded-lg hover:bg-zinc-100 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Action bar */}
-        <div className="px-6 py-3 bg-zinc-950/40 border-b border-zinc-800 flex items-center justify-between gap-2">
+        <div className="px-6 py-3 bg-zinc-50 border-b border-zinc-100 flex items-center justify-between gap-2">
           <button
             onClick={handleSaveCurrent}
-            className="flex items-center gap-2 px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold shadow-sm transition-colors cursor-pointer"
+            className="flex items-center gap-2 px-3.5 py-1.5 bg-zinc-900 hover:bg-zinc-800 text-white rounded-lg text-xs font-semibold shadow-sm transition-colors cursor-pointer"
           >
             <Save className="w-4 h-4" />
             <span>Salvar Atual</span>
@@ -171,7 +171,7 @@ export const ProjectsModal: React.FC<ProjectsModalProps> = ({
           <div className="flex items-center gap-2">
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded-lg text-xs font-medium border border-zinc-700 transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-zinc-100 text-zinc-700 rounded-lg text-xs font-medium border border-zinc-200 transition-colors cursor-pointer shadow-sm"
             >
               <Upload className="w-3.5 h-3.5" />
               <span>Importar JSON</span>
@@ -190,9 +190,9 @@ export const ProjectsModal: React.FC<ProjectsModalProps> = ({
         <div className="p-6 overflow-y-auto space-y-3 flex-1">
           {savedProjects.length === 0 ? (
             <div className="text-center py-10 px-4">
-              <FolderOpen className="w-10 h-10 text-zinc-600 mx-auto mb-2 opacity-50" />
-              <p className="text-sm font-medium text-zinc-400">Nenhum projeto salvo ainda</p>
-              <p className="text-xs text-zinc-500 mt-1 max-w-xs mx-auto">
+              <FolderOpen className="w-10 h-10 text-zinc-300 mx-auto mb-2" />
+              <p className="text-sm font-medium text-zinc-500">Nenhum projeto salvo ainda</p>
+              <p className="text-xs text-zinc-400 mt-1 max-w-xs mx-auto">
                 Clique em "Salvar Atual" para armazenar sua composição no navegador ou importe um arquivo JSON.
               </p>
             </div>
@@ -207,13 +207,13 @@ export const ProjectsModal: React.FC<ProjectsModalProps> = ({
                   key={project.id}
                   className={`p-3.5 rounded-xl border transition-all flex items-center justify-between gap-3 ${
                     isCurrent
-                      ? 'bg-indigo-950/30 border-indigo-500/50'
-                      : 'bg-zinc-800/40 border-zinc-800 hover:border-zinc-700'
+                      ? 'bg-zinc-50 border-zinc-300 shadow-sm'
+                      : 'bg-white border-zinc-200 hover:border-zinc-300'
                   }`}
                 >
                   <div className="flex items-center gap-3 min-w-0 flex-1">
                     {/* Small color swatches preview */}
-                    <div className="w-12 h-12 rounded-lg overflow-hidden shrink-0 grid grid-cols-2 grid-rows-2 border border-zinc-700">
+                    <div className="w-12 h-12 rounded-lg overflow-hidden shrink-0 grid grid-cols-2 grid-rows-2 border border-zinc-200 shadow-inner">
                       {project.points.slice(0, 4).map((pt, i) => (
                         <div key={i} style={{ backgroundColor: pt.color }} />
                       ))}
@@ -227,28 +227,28 @@ export const ProjectsModal: React.FC<ProjectsModalProps> = ({
                             value={editingName}
                             onChange={(e) => setEditingName(e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && handleConfirmRename()}
-                            className="bg-zinc-900 border border-indigo-500 rounded px-2 py-0.5 text-xs text-white focus:outline-none"
+                            className="bg-white border border-zinc-300 rounded px-2 py-0.5 text-xs text-zinc-900 focus:outline-none focus:border-zinc-500"
                             autoFocus
                           />
                           <button
                             onClick={handleConfirmRename}
-                            className="p-1 text-emerald-400 hover:text-emerald-300"
+                            className="p-1 text-emerald-600 hover:text-emerald-700"
                           >
                             <Check className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       ) : (
                         <div className="flex items-center gap-2">
-                          <h4 className="text-xs font-semibold text-zinc-200 truncate">{project.name}</h4>
+                          <h4 className="text-xs font-semibold text-zinc-900 truncate">{project.name}</h4>
                           {isCurrent && (
-                            <span className="px-1.5 py-0.5 rounded text-[9px] bg-indigo-500/20 text-indigo-400 font-medium">
+                            <span className="px-1.5 py-0.5 rounded text-[9px] bg-zinc-100 text-zinc-800 border border-zinc-200 font-medium">
                               Ativo
                             </span>
                           )}
                         </div>
                       )}
 
-                      <div className="flex items-center gap-2 text-[10px] text-zinc-400 mt-0.5">
+                      <div className="flex items-center gap-2 text-[10px] text-zinc-500 mt-0.5">
                         <span>{project.dimensions.width} × {project.dimensions.height}px</span>
                         <span>•</span>
                         <span>{project.points.length} pontos</span>
@@ -261,8 +261,8 @@ export const ProjectsModal: React.FC<ProjectsModalProps> = ({
                   {/* Actions */}
                   <div className="flex items-center gap-1 shrink-0">
                     {isDeleting ? (
-                      <div className="flex items-center gap-1 bg-rose-950/70 p-1 rounded-lg border border-rose-500/50">
-                        <span className="text-[10px] text-rose-300 px-1 font-medium">Excluir?</span>
+                      <div className="flex items-center gap-1 bg-rose-50 p-1 rounded-lg border border-rose-200">
+                        <span className="text-[10px] text-rose-700 px-1 font-medium">Excluir?</span>
                         <button
                           onClick={() => handleDelete(project.id)}
                           className="px-2 py-0.5 bg-rose-600 hover:bg-rose-500 text-white text-[10px] rounded font-medium"
@@ -271,7 +271,7 @@ export const ProjectsModal: React.FC<ProjectsModalProps> = ({
                         </button>
                         <button
                           onClick={() => setDeleteConfirmId(null)}
-                          className="px-2 py-0.5 bg-zinc-800 text-zinc-300 text-[10px] rounded"
+                          className="px-2 py-0.5 bg-zinc-200 text-zinc-700 text-[10px] rounded hover:bg-zinc-300"
                         >
                           Não
                         </button>
@@ -284,7 +284,7 @@ export const ProjectsModal: React.FC<ProjectsModalProps> = ({
                             onShowToast('success', 'Projeto Carregado', `"${project.name}" foi aberto no editor.`);
                             onClose();
                           }}
-                          className="px-2.5 py-1 bg-zinc-700 hover:bg-zinc-600 text-zinc-100 text-xs font-medium rounded-lg transition-colors cursor-pointer"
+                          className="px-2.5 py-1 bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-medium rounded-lg transition-colors cursor-pointer shadow-sm"
                           title="Abrir no editor"
                         >
                           Abrir
@@ -292,7 +292,7 @@ export const ProjectsModal: React.FC<ProjectsModalProps> = ({
 
                         <button
                           onClick={() => handleStartRename(project)}
-                          className="p-1.5 text-zinc-400 hover:text-zinc-200 rounded-lg hover:bg-zinc-700/50 transition-colors"
+                          className="p-1.5 text-zinc-400 hover:text-zinc-700 rounded-lg hover:bg-zinc-100 transition-colors"
                           title="Renomear"
                         >
                           <Edit2 className="w-3.5 h-3.5" />
@@ -300,7 +300,7 @@ export const ProjectsModal: React.FC<ProjectsModalProps> = ({
 
                         <button
                           onClick={() => handleDuplicate(project)}
-                          className="p-1.5 text-zinc-400 hover:text-zinc-200 rounded-lg hover:bg-zinc-700/50 transition-colors"
+                          className="p-1.5 text-zinc-400 hover:text-zinc-700 rounded-lg hover:bg-zinc-100 transition-colors"
                           title="Duplicar"
                         >
                           <Copy className="w-3.5 h-3.5" />
@@ -308,7 +308,7 @@ export const ProjectsModal: React.FC<ProjectsModalProps> = ({
 
                         <button
                           onClick={() => handleExportJson(project)}
-                          className="p-1.5 text-zinc-400 hover:text-zinc-200 rounded-lg hover:bg-zinc-700/50 transition-colors"
+                          className="p-1.5 text-zinc-400 hover:text-zinc-700 rounded-lg hover:bg-zinc-100 transition-colors"
                           title="Exportar JSON"
                         >
                           <Download className="w-3.5 h-3.5" />
@@ -316,7 +316,7 @@ export const ProjectsModal: React.FC<ProjectsModalProps> = ({
 
                         <button
                           onClick={() => setDeleteConfirmId(project.id)}
-                          className="p-1.5 text-zinc-500 hover:text-rose-400 rounded-lg hover:bg-zinc-700/50 transition-colors"
+                          className="p-1.5 text-zinc-400 hover:text-rose-600 rounded-lg hover:bg-zinc-100 transition-colors"
                           title="Excluir"
                         >
                           <Trash2 className="w-3.5 h-3.5" />

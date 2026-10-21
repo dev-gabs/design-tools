@@ -71,7 +71,6 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
       ? GRADIENT_PRESETS
       : GRADIENT_PRESETS.filter((p) => p.category === selectedCategory);
 
-  // Randomizer actions
   const handleGenerateAll = () => {
     const newSeed = Math.floor(Math.random() * 1000000);
     const result = generateRandomComposition(randomCount, newSeed);
@@ -101,7 +100,6 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
     onShowToast('info', 'Variação Sutil Aplicada');
   };
 
-  // Palette actions
   const handleImportHex = () => {
     const colors = parseHexPalette(hexInput);
     if (colors.length === 0) {
@@ -153,15 +151,15 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
   if (!isOpen) return null;
 
   return (
-    <aside className="w-80 h-full bg-zinc-900/95 border-r border-zinc-800 flex flex-col shrink-0 select-none z-20 backdrop-blur">
+    <aside className="w-80 h-full bg-white border-r border-zinc-200/80 flex flex-col shrink-0 select-none z-20 text-zinc-900">
       {/* Tabs Header */}
-      <div className="flex border-b border-zinc-800 px-3 pt-2 bg-zinc-950/40">
+      <div className="flex border-b border-zinc-200/80 px-3 pt-2 bg-zinc-50/50">
         <button
           onClick={() => setActiveTab('presets')}
-          className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium border-b-2 transition-all ${
+          className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold border-b-2 transition-all ${
             activeTab === 'presets'
-              ? 'border-indigo-500 text-indigo-400 font-semibold'
-              : 'border-transparent text-zinc-400 hover:text-zinc-200'
+              ? 'border-indigo-600 text-indigo-600'
+              : 'border-transparent text-zinc-500 hover:text-zinc-800'
           }`}
         >
           <Sparkles className="w-3.5 h-3.5" />
@@ -170,10 +168,10 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
 
         <button
           onClick={() => setActiveTab('palette')}
-          className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium border-b-2 transition-all ${
+          className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold border-b-2 transition-all ${
             activeTab === 'palette'
-              ? 'border-indigo-500 text-indigo-400 font-semibold'
-              : 'border-transparent text-zinc-400 hover:text-zinc-200'
+              ? 'border-indigo-600 text-indigo-600'
+              : 'border-transparent text-zinc-500 hover:text-zinc-800'
           }`}
         >
           <Palette className="w-3.5 h-3.5" />
@@ -182,10 +180,10 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
 
         <button
           onClick={() => setActiveTab('points')}
-          className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium border-b-2 transition-all ${
+          className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold border-b-2 transition-all ${
             activeTab === 'points'
-              ? 'border-indigo-500 text-indigo-400 font-semibold'
-              : 'border-transparent text-zinc-400 hover:text-zinc-200'
+              ? 'border-indigo-600 text-indigo-600'
+              : 'border-transparent text-zinc-500 hover:text-zinc-800'
           }`}
         >
           <Layers className="w-3.5 h-3.5" />
@@ -195,30 +193,30 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
 
       {/* Tab 1: Presets & Randomizer */}
       {activeTab === 'presets' && (
-        <div className="flex-1 overflow-y-auto p-4 space-y-6">
+        <div className="flex-1 overflow-y-auto p-4 space-y-5">
           {/* Generator Section */}
-          <div className="bg-zinc-950/50 border border-zinc-800 rounded-xl p-3.5 space-y-3">
+          <div className="bg-zinc-50 border border-zinc-200 rounded-xl p-3.5 space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-zinc-200 flex items-center gap-1.5">
-                <Shuffle className="w-3.5 h-3.5 text-indigo-400" />
-                Gerador Criativo
+              <span className="text-xs font-bold text-zinc-900 flex items-center gap-1.5">
+                <Shuffle className="w-3.5 h-3.5 text-indigo-600" />
+                Gerador Aleatório
               </span>
               <div className="flex items-center gap-1">
-                <span className="text-[10px] text-zinc-500 font-mono">Seed:</span>
+                <span className="text-[10px] text-zinc-400 font-mono">Seed:</span>
                 <input
                   type="number"
                   value={settings.seed}
                   onChange={(e) => onUpdateSettings({ seed: parseInt(e.target.value, 10) || 0 })}
-                  className="w-14 bg-zinc-900 border border-zinc-700 rounded px-1 text-[10px] font-mono text-zinc-300 text-right"
+                  className="w-14 bg-white border border-zinc-200 rounded px-1.5 text-[10px] font-mono text-zinc-800 text-right focus:outline-none"
                 />
               </div>
             </div>
 
             {/* Points count slider */}
             <div>
-              <div className="flex justify-between text-[11px] text-zinc-400 mb-1">
+              <div className="flex justify-between text-[11px] text-zinc-600 mb-1">
                 <span>Quantidade de Pontos</span>
-                <span className="font-mono text-indigo-400 font-medium">{randomCount}</span>
+                <span className="font-mono text-indigo-600 font-semibold">{randomCount}</span>
               </div>
               <input
                 type="range"
@@ -226,7 +224,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
                 max="16"
                 value={randomCount}
                 onChange={(e) => setRandomCount(parseInt(e.target.value, 10))}
-                className="w-full accent-indigo-500 bg-zinc-800 h-1.5 rounded-lg appearance-none cursor-pointer"
+                className="w-full accent-indigo-600 bg-zinc-200 h-1.5 rounded-lg appearance-none cursor-pointer"
               />
             </div>
 
@@ -242,7 +240,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
 
               <button
                 onClick={handleRandomizeColors}
-                className="p-2 bg-zinc-800/80 hover:bg-zinc-700 border border-zinc-700/80 text-zinc-200 rounded-lg text-[11px] font-medium transition-colors text-center"
+                className="p-2 bg-white hover:bg-zinc-100 border border-zinc-200 text-zinc-800 rounded-lg text-[11px] font-medium transition-colors text-center"
                 title="Preserva posições dos pontos"
               >
                 Só Cores
@@ -250,7 +248,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
 
               <button
                 onClick={handleRandomizeGeometry}
-                className="p-2 bg-zinc-800/80 hover:bg-zinc-700 border border-zinc-700/80 text-zinc-200 rounded-lg text-[11px] font-medium transition-colors text-center"
+                className="p-2 bg-white hover:bg-zinc-100 border border-zinc-200 text-zinc-800 rounded-lg text-[11px] font-medium transition-colors text-center"
                 title="Preserva paleta atual"
               >
                 Só Geometria
@@ -258,7 +256,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
 
               <button
                 onClick={handleSubtleVariation}
-                className="p-2 bg-zinc-800/80 hover:bg-zinc-700 border border-zinc-700/80 text-zinc-200 rounded-lg text-[11px] font-medium transition-colors col-span-2 text-center"
+                className="p-2 bg-white hover:bg-zinc-100 border border-zinc-200 text-zinc-800 rounded-lg text-[11px] font-medium transition-colors col-span-2 text-center"
                 title="Modificação suave e orgânica"
               >
                 Variação Sutil
@@ -268,9 +266,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
 
           {/* Presets Gallery */}
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-zinc-200">Galeria de Estilos</span>
-            </div>
+            <span className="text-xs font-bold text-zinc-900 block">Estilos Curados</span>
 
             {/* Category pills */}
             <div className="flex items-center gap-1 overflow-x-auto pb-1 scrollbar-none">
@@ -278,10 +274,10 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
-                  className={`px-2 py-0.5 rounded-md text-[10px] font-medium whitespace-nowrap transition-colors ${
+                  className={`px-2.5 py-1 rounded-lg text-[10px] font-medium whitespace-nowrap transition-colors ${
                     selectedCategory === cat
-                      ? 'bg-zinc-700 text-white'
-                      : 'bg-zinc-800/50 text-zinc-400 hover:text-zinc-200'
+                      ? 'bg-zinc-900 text-white'
+                      : 'bg-zinc-100 text-zinc-600 hover:text-zinc-900'
                   }`}
                 >
                   {cat === 'all' ? 'Todos' : cat}
@@ -289,7 +285,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
               ))}
             </div>
 
-            {/* Presets List */}
+            {/* Presets Grid */}
             <div className="grid grid-cols-2 gap-2.5">
               {filteredPresets.map((preset) => {
                 const colors = preset.points.slice(0, 4).map((p) => p.color);
@@ -297,9 +293,8 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
                   <button
                     key={preset.id}
                     onClick={() => onApplyPreset(preset)}
-                    className="group flex flex-col rounded-xl overflow-hidden border border-zinc-800 bg-zinc-950/40 hover:border-indigo-500/80 transition-all text-left cursor-pointer"
+                    className="group flex flex-col rounded-xl overflow-hidden border border-zinc-200 bg-white hover:border-indigo-400 hover:shadow-md transition-all text-left cursor-pointer"
                   >
-                    {/* Gradient Miniature */}
                     <div
                       className="h-16 w-full relative transition-transform duration-300 group-hover:scale-105"
                       style={{
@@ -309,11 +304,11 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
                                      radial-gradient(circle at 80% 80%, ${colors[3] || '#FFF'}, transparent 60%) #111`,
                       }}
                     />
-                    <div className="p-2 bg-zinc-900/90 border-t border-zinc-800/60">
-                      <div className="text-xs font-semibold text-zinc-200 group-hover:text-indigo-300 truncate">
+                    <div className="p-2 border-t border-zinc-100 bg-white">
+                      <div className="text-xs font-bold text-zinc-800 group-hover:text-indigo-600 truncate">
                         {preset.name}
                       </div>
-                      <div className="text-[10px] text-zinc-500 truncate mt-0.5">{preset.category}</div>
+                      <div className="text-[10px] text-zinc-400 truncate mt-0.5">{preset.category}</div>
                     </div>
                   </button>
                 );
@@ -325,14 +320,13 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
 
       {/* Tab 2: Color Palette */}
       {activeTab === 'palette' && (
-        <div className="flex-1 overflow-y-auto p-4 space-y-6">
-          {/* Active Colors Swatches */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-5">
           <div>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-semibold text-zinc-200">Cores Ativas ({points.length})</span>
+              <span className="text-xs font-bold text-zinc-900">Cores da Composição ({points.length})</span>
               <button
                 onClick={handleReversePalette}
-                className="text-[11px] text-zinc-400 hover:text-white flex items-center gap-1 transition-colors"
+                className="text-[11px] text-zinc-500 hover:text-zinc-900 flex items-center gap-1 transition-colors"
                 title="Inverter ordem das cores"
               >
                 <ArrowRightLeft className="w-3 h-3" />
@@ -340,7 +334,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
               </button>
             </div>
 
-            <div className="flex flex-wrap gap-1.5 p-2.5 bg-zinc-950/50 border border-zinc-800 rounded-xl">
+            <div className="flex flex-wrap gap-1.5 p-3 bg-zinc-50 border border-zinc-200 rounded-xl">
               {points.map((pt, idx) => (
                 <button
                   key={pt.id}
@@ -348,8 +342,8 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
                   style={{ backgroundColor: pt.color }}
                   className={`w-7 h-7 rounded-lg border transition-transform hover:scale-110 shadow-sm ${
                     selectedPointIds.includes(pt.id)
-                      ? 'border-white ring-2 ring-indigo-500 scale-105'
-                      : 'border-white/20'
+                      ? 'border-indigo-600 ring-2 ring-indigo-400 scale-105'
+                      : 'border-black/10'
                   }`}
                   title={`Ponto ${idx + 1}: ${pt.color}`}
                 />
@@ -359,13 +353,13 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
 
           {/* Color Harmonies */}
           <div className="space-y-2">
-            <span className="text-xs font-semibold text-zinc-200">Gerar Harmonias Cromáticas</span>
+            <span className="text-xs font-bold text-zinc-900 block">Gerar Harmonias</span>
             <div className="grid grid-cols-2 gap-2">
               {(['vibrant', 'analogous', 'complementary', 'triadic', 'monochrome'] as const).map((type) => (
                 <button
                   key={type}
                   onClick={() => handleApplyHarmony(type)}
-                  className="px-2.5 py-2 bg-zinc-800/60 hover:bg-zinc-700/80 border border-zinc-700/60 rounded-lg text-[11px] font-medium text-zinc-200 capitalize transition-colors text-center"
+                  className="px-2.5 py-2 bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 rounded-lg text-[11px] font-medium text-zinc-700 capitalize transition-colors text-center"
                 >
                   {type === 'vibrant'
                     ? 'Vibrante'
@@ -382,25 +376,25 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
           </div>
 
           {/* Global HSL Quick Adjustment */}
-          <div className="bg-zinc-950/50 border border-zinc-800 rounded-xl p-3.5 space-y-3">
-            <span className="text-xs font-semibold text-zinc-200 flex items-center gap-1.5">
-              <SunMedium className="w-3.5 h-3.5 text-amber-400" />
+          <div className="bg-zinc-50 border border-zinc-200 rounded-xl p-3.5 space-y-3">
+            <span className="text-xs font-bold text-zinc-900 flex items-center gap-1.5">
+              <SunMedium className="w-3.5 h-3.5 text-amber-500" />
               Ajustes Globais HSL
             </span>
 
             <div className="space-y-2 text-xs">
               <div className="flex items-center justify-between">
-                <span className="text-zinc-400">Girar Matiz (Hue)</span>
+                <span className="text-zinc-600">Matiz (Hue)</span>
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => handleAdjustHSL(-15, 0, 0)}
-                    className="px-2 py-0.5 bg-zinc-800 hover:bg-zinc-700 rounded text-zinc-300"
+                    className="px-2 py-0.5 bg-white border border-zinc-200 hover:bg-zinc-100 rounded text-zinc-700 font-mono text-[11px]"
                   >
                     -15°
                   </button>
                   <button
                     onClick={() => handleAdjustHSL(15, 0, 0)}
-                    className="px-2 py-0.5 bg-zinc-800 hover:bg-zinc-700 rounded text-zinc-300"
+                    className="px-2 py-0.5 bg-white border border-zinc-200 hover:bg-zinc-100 rounded text-zinc-700 font-mono text-[11px]"
                   >
                     +15°
                   </button>
@@ -408,17 +402,17 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
               </div>
 
               <div className="flex items-center justify-between">
-                <span className="text-zinc-400">Saturação</span>
+                <span className="text-zinc-600">Saturação</span>
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => handleAdjustHSL(0, -10, 0)}
-                    className="px-2 py-0.5 bg-zinc-800 hover:bg-zinc-700 rounded text-zinc-300"
+                    className="px-2 py-0.5 bg-white border border-zinc-200 hover:bg-zinc-100 rounded text-zinc-700 font-mono text-[11px]"
                   >
                     -10%
                   </button>
                   <button
                     onClick={() => handleAdjustHSL(0, 10, 0)}
-                    className="px-2 py-0.5 bg-zinc-800 hover:bg-zinc-700 rounded text-zinc-300"
+                    className="px-2 py-0.5 bg-white border border-zinc-200 hover:bg-zinc-100 rounded text-zinc-700 font-mono text-[11px]"
                   >
                     +10%
                   </button>
@@ -426,17 +420,17 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
               </div>
 
               <div className="flex items-center justify-between">
-                <span className="text-zinc-400">Luminosidade</span>
+                <span className="text-zinc-600">Luminosidade</span>
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => handleAdjustHSL(0, 0, -10)}
-                    className="px-2 py-0.5 bg-zinc-800 hover:bg-zinc-700 rounded text-zinc-300"
+                    className="px-2 py-0.5 bg-white border border-zinc-200 hover:bg-zinc-100 rounded text-zinc-700 text-[11px]"
                   >
                     Mais Escuro
                   </button>
                   <button
                     onClick={() => handleAdjustHSL(0, 0, 10)}
-                    className="px-2 py-0.5 bg-zinc-800 hover:bg-zinc-700 rounded text-zinc-300"
+                    className="px-2 py-0.5 bg-white border border-zinc-200 hover:bg-zinc-100 rounded text-zinc-700 text-[11px]"
                   >
                     Mais Claro
                   </button>
@@ -447,18 +441,17 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
 
           {/* Import Hex Codes */}
           <div className="space-y-2">
-            <span className="text-xs font-semibold text-zinc-200">Importar Paleta HEX</span>
-            <p className="text-[10px] text-zinc-400">Cole múltiplos códigos separados por vírgula ou espaço</p>
+            <span className="text-xs font-bold text-zinc-900 block">Importar HEX</span>
             <textarea
               rows={2}
               value={hexInput}
               onChange={(e) => setHexInput(e.target.value)}
               placeholder="#FF5733, #33FF57, #3357FF..."
-              className="w-full bg-zinc-950/80 border border-zinc-800 rounded-lg p-2 text-xs font-mono text-zinc-200 focus:outline-none focus:border-indigo-500"
+              className="w-full bg-zinc-50 border border-zinc-200 rounded-lg p-2 text-xs font-mono text-zinc-800 focus:outline-none focus:border-indigo-500"
             />
             <button
               onClick={handleImportHex}
-              className="w-full py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded-lg text-xs font-medium border border-zinc-700 transition-colors"
+              className="w-full py-1.5 bg-zinc-900 hover:bg-zinc-800 text-white rounded-lg text-xs font-semibold transition-colors"
             >
               Aplicar Paleta
             </button>
@@ -466,14 +459,14 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
         </div>
       )}
 
-      {/* Tab 3: Points / Layers List */}
+      {/* Tab 3: Points List */}
       {activeTab === 'points' && (
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
           <div className="flex items-center justify-between mb-1">
-            <span className="text-xs font-semibold text-zinc-200">Lista de Pontos</span>
+            <span className="text-xs font-bold text-zinc-900">Camadas de Pontos</span>
             <button
               onClick={onAddPoint}
-              className="flex items-center gap-1 px-2.5 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+              className="flex items-center gap-1 px-2.5 py-1 bg-zinc-900 hover:bg-zinc-800 text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Adicionar</span>
@@ -490,26 +483,25 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
                   onClick={() => onSelectPoint(pt.id)}
                   className={`p-2.5 rounded-xl border transition-all flex items-center justify-between gap-2.5 cursor-pointer ${
                     isSelected
-                      ? 'bg-indigo-950/40 border-indigo-500/80'
-                      : 'bg-zinc-950/40 border-zinc-800/80 hover:border-zinc-700'
+                      ? 'bg-indigo-50 border-indigo-300'
+                      : 'bg-zinc-50 border-zinc-200 hover:border-zinc-300'
                   }`}
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
                     <div
-                      className="w-5 h-5 rounded-full border border-white/30 shrink-0"
+                      className="w-5 h-5 rounded-full border border-black/15 shrink-0"
                       style={{ backgroundColor: pt.color }}
                     />
                     <div className="min-w-0">
-                      <div className="text-xs font-medium text-zinc-200 truncate">
+                      <div className="text-xs font-semibold text-zinc-800 truncate">
                         Ponto {idx + 1}
                       </div>
-                      <div className="text-[10px] font-mono text-zinc-400">
+                      <div className="text-[10px] font-mono text-zinc-500">
                         {Math.round(pt.x * 100)}%, {Math.round(pt.y * 100)}%
                       </div>
                     </div>
                   </div>
 
-                  {/* Actions */}
                   <div className="flex items-center gap-1 shrink-0">
                     <button
                       onClick={(e) => {
@@ -517,7 +509,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
                         onToggleLockPoint(pt.id);
                       }}
                       className={`p-1 rounded transition-colors ${
-                        pt.locked ? 'text-amber-400' : 'text-zinc-500 hover:text-zinc-300'
+                        pt.locked ? 'text-amber-600' : 'text-zinc-400 hover:text-zinc-700'
                       }`}
                       title={pt.locked ? 'Desbloquear Ponto' : 'Bloquear Ponto'}
                     >
@@ -529,7 +521,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
                         e.stopPropagation();
                         onDuplicatePoint(pt.id);
                       }}
-                      className="p-1 text-zinc-500 hover:text-zinc-300 rounded transition-colors"
+                      className="p-1 text-zinc-400 hover:text-zinc-700 rounded transition-colors"
                       title="Duplicar Ponto (Ctrl+D)"
                     >
                       <Copy className="w-3.5 h-3.5" />
@@ -541,7 +533,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
                         onDeletePoint(pt.id);
                       }}
                       disabled={points.length <= 1}
-                      className="p-1 text-zinc-500 hover:text-rose-400 disabled:opacity-30 rounded transition-colors"
+                      className="p-1 text-zinc-400 hover:text-rose-500 disabled:opacity-30 rounded transition-colors"
                       title="Excluir Ponto (Del)"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
