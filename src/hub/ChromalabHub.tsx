@@ -84,7 +84,7 @@ export const ChromalabHub: React.FC<ChromalabHubProps> = ({
       <div className="absolute top-0 right-0 w-96 h-96 bg-dotted-grid opacity-60 pointer-events-none" />
 
       {/* Top Header */}
-      <header className="h-16 border-b border-[#E7E7F0] bg-white/80 backdrop-blur-md px-6 md:px-12 flex items-center justify-between sticky top-0 z-30">
+      <header className="h-16 shrink-0 border-b border-[#E7E7F0] bg-white/80 backdrop-blur-md px-6 md:px-12 flex items-center justify-between sticky top-0 z-30">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#5B3DB5] to-[#7655D9] text-white flex items-center justify-center font-bold tracking-tighter text-sm shadow-sm shadow-[#7655D9]/20">
             Ch
