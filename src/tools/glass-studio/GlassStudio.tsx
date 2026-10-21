@@ -104,24 +104,24 @@ export const GlassStudio: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col w-screen h-screen overflow-hidden bg-zinc-50 text-zinc-900 select-none">
+    <div className="flex flex-col w-screen h-screen overflow-hidden bg-[#FBFBFE] text-[#17172A] select-none">
       {/* Top Chromalab Bar */}
-      <header className="h-14 bg-white border-b border-zinc-200/80 px-4 md:px-6 flex items-center justify-between gap-3 shrink-0 z-20">
+      <header className="h-14 bg-white border-b border-[#E7E7F0] px-4 md:px-6 flex items-center justify-between gap-3 shrink-0 z-20">
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigateToTool('hub')}
-            className="flex items-center gap-1.5 text-xs font-medium text-zinc-500 hover:text-zinc-900 transition-colors py-1.5 px-2.5 rounded-lg hover:bg-zinc-100 cursor-pointer"
+            className="flex items-center gap-1.5 text-xs font-medium text-[#62647A] hover:text-[#7655D9] transition-colors py-1.5 px-2.5 rounded-lg hover:bg-[#F5F2FF] cursor-pointer"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Chromalab</span>
           </button>
 
-          <div className="h-4 w-[1px] bg-zinc-200" />
+          <div className="h-4 w-[1px] bg-[#E7E7F0]" />
 
           <div>
-            <h1 className="text-sm font-bold tracking-tight text-zinc-900 flex items-center gap-2">
+            <h1 className="text-sm font-bold tracking-tight text-[#17172A] flex items-center gap-2">
               Glass Studio
-              <span className="text-[10px] bg-sky-50 text-sky-700 font-semibold px-2 py-0.5 rounded-full border border-sky-200/80">
+              <span className="text-[10px] bg-[#EEF2FF] text-[#7655D9] font-semibold px-2 py-0.5 rounded-full border border-[#D6D1F3]">
                 Módulo 06
               </span>
             </h1>
@@ -131,9 +131,9 @@ export const GlassStudio: React.FC = () => {
         {/* Copy CSS Button */}
         <button
           onClick={copyCss}
-          className="flex items-center gap-1.5 px-3.5 py-1.5 bg-zinc-900 hover:bg-zinc-800 text-white rounded-lg text-xs font-semibold shadow-sm transition-colors cursor-pointer"
+          className="flex items-center gap-1.5 px-3.5 py-1.5 bg-[#7655D9] hover:bg-[#5B3DB5] text-white rounded-lg text-xs font-semibold shadow-sm shadow-[#7655D9]/20 transition-colors cursor-pointer"
         >
-          {copiedCss ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+          {copiedCss ? <Check className="w-3.5 h-3.5 text-[#DCD4FF]" /> : <Copy className="w-3.5 h-3.5" />}
           <span>Copiar CSS</span>
         </button>
       </header>
@@ -141,10 +141,10 @@ export const GlassStudio: React.FC = () => {
       {/* Main Studio Workspace */}
       <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
         {/* Controls Sidebar */}
-        <aside className="w-full md:w-80 bg-white border-b md:border-b-0 md:border-r border-zinc-200/80 p-5 overflow-y-auto space-y-4 shrink-0">
+        <aside className="w-full md:w-80 bg-white border-b md:border-b-0 md:border-r border-[#E7E7F0] p-5 overflow-y-auto space-y-4 shrink-0">
           {/* Component Type Selector */}
           <div>
-            <label className="text-xs font-semibold text-zinc-800 block mb-1.5">
+            <label className="text-xs font-semibold text-[#17172A] block mb-1.5">
               Componente de Demonstração
             </label>
             <div className="grid grid-cols-2 gap-1.5">
@@ -157,10 +157,10 @@ export const GlassStudio: React.FC = () => {
                 <button
                   key={c.id}
                   onClick={() => setPreviewComp(c.id as PreviewComponent)}
-                  className={`py-1.5 px-2 rounded-lg border text-xs text-center font-medium ${
+                  className={`py-1.5 px-2 rounded-lg border text-xs text-center font-medium transition-all cursor-pointer ${
                     previewComp === c.id
-                      ? 'bg-zinc-900 border-zinc-900 text-white'
-                      : 'bg-zinc-50 border-zinc-200 text-zinc-600 hover:text-zinc-900'
+                      ? 'bg-[#7655D9] border-[#7655D9] text-white shadow-xs'
+                      : 'bg-[#F4F5FA] border-[#E7E7F0] text-[#62647A] hover:text-[#17172A] hover:bg-[#F5F2FF]'
                   }`}
                 >
                   {c.label}
@@ -171,7 +171,7 @@ export const GlassStudio: React.FC = () => {
 
           {/* Background Selector */}
           <div>
-            <label className="text-xs font-semibold text-zinc-800 block mb-1.5">
+            <label className="text-xs font-semibold text-[#17172A] block mb-1.5">
               Plano de Fundo (Backdrop)
             </label>
             <div className="grid grid-cols-2 gap-1.5 text-xs">
@@ -184,10 +184,10 @@ export const GlassStudio: React.FC = () => {
                 <button
                   key={b.id}
                   onClick={() => setBgType(b.id as BackgroundType)}
-                  className={`py-1.5 px-2 rounded-lg border text-xs text-center font-medium ${
+                  className={`py-1.5 px-2 rounded-lg border text-xs text-center font-medium transition-all cursor-pointer ${
                     bgType === b.id
-                      ? 'bg-zinc-900 border-zinc-900 text-white'
-                      : 'bg-zinc-50 border-zinc-200 text-zinc-600 hover:text-zinc-900'
+                      ? 'bg-[#7655D9] border-[#7655D9] text-white shadow-xs'
+                      : 'bg-[#F4F5FA] border-[#E7E7F0] text-[#62647A] hover:text-[#17172A] hover:bg-[#F5F2FF]'
                   }`}
                 >
                   {b.label}
@@ -197,11 +197,11 @@ export const GlassStudio: React.FC = () => {
           </div>
 
           {/* Blur & Opacity */}
-          <div className="space-y-3 pt-2 border-t border-zinc-100">
+          <div className="space-y-3 pt-2 border-t border-[#E7E7F0]">
             <div>
-              <div className="flex justify-between text-xs text-zinc-700 mb-1">
+              <div className="flex justify-between text-xs text-[#62647A] mb-1">
                 <span>Intensidade do Desfoque (Blur)</span>
-                <span className="font-mono text-zinc-900 font-semibold">{blur}px</span>
+                <span className="font-mono text-[#7655D9] font-semibold">{blur}px</span>
               </div>
               <input
                 type="range"
@@ -209,14 +209,14 @@ export const GlassStudio: React.FC = () => {
                 max="40"
                 value={blur}
                 onChange={(e) => setBlur(parseInt(e.target.value, 10))}
-                className="w-full accent-indigo-600 bg-zinc-200 h-1.5 rounded-lg appearance-none cursor-pointer"
+                className="w-full accent-[#7655D9] bg-[#E7E7F0] h-1.5 rounded-lg appearance-none cursor-pointer"
               />
             </div>
 
             <div>
-              <div className="flex justify-between text-xs text-zinc-700 mb-1">
+              <div className="flex justify-between text-xs text-[#62647A] mb-1">
                 <span>Transparência do Fundo</span>
-                <span className="font-mono text-zinc-900 font-semibold">{Math.round(fillOpacity * 100)}%</span>
+                <span className="font-mono text-[#7655D9] font-semibold">{Math.round(fillOpacity * 100)}%</span>
               </div>
               <input
                 type="range"
@@ -225,20 +225,20 @@ export const GlassStudio: React.FC = () => {
                 step="0.02"
                 value={fillOpacity}
                 onChange={(e) => setFillOpacity(parseFloat(e.target.value))}
-                className="w-full accent-indigo-600 bg-zinc-200 h-1.5 rounded-lg appearance-none cursor-pointer"
+                className="w-full accent-[#7655D9] bg-[#E7E7F0] h-1.5 rounded-lg appearance-none cursor-pointer"
               />
             </div>
 
             <div className="flex items-center justify-between text-xs">
-              <span className="text-zinc-600">Cor do Preenchimento</span>
+              <span className="text-[#62647A]">Cor do Preenchimento</span>
               <div className="flex items-center gap-2">
                 <input
                   type="color"
                   value={fillColor}
                   onChange={(e) => setFillColor(e.target.value)}
-                  className="w-6 h-6 rounded border border-zinc-200 cursor-pointer bg-transparent"
+                  className="w-6 h-6 rounded border border-[#E7E7F0] cursor-pointer bg-transparent"
                 />
-                <span className="font-mono text-zinc-800">{fillColor}</span>
+                <span className="font-mono text-[#17172A]">{fillColor}</span>
               </div>
             </div>
 
@@ -248,35 +248,35 @@ export const GlassStudio: React.FC = () => {
                 id="gradHighlight"
                 checked={useGradientHighlight}
                 onChange={(e) => setUseGradientHighlight(e.target.checked)}
-                className="w-4 h-4 accent-indigo-600 rounded cursor-pointer"
+                className="w-4 h-4 accent-[#7655D9] rounded cursor-pointer"
               />
-              <label htmlFor="gradHighlight" className="text-xs text-zinc-600 cursor-pointer">
+              <label htmlFor="gradHighlight" className="text-xs text-[#62647A] cursor-pointer">
                 Reflexo especular suave (Gradiente)
               </label>
             </div>
           </div>
 
           {/* Border Controls */}
-          <div className="space-y-3 pt-2 border-t border-zinc-100">
-            <span className="text-xs font-semibold text-zinc-800 block">Borda & Contorno</span>
+          <div className="space-y-3 pt-2 border-t border-[#E7E7F0]">
+            <span className="text-xs font-semibold text-[#17172A] block">Borda & Contorno</span>
 
             <div className="flex items-center justify-between text-xs">
-              <span className="text-zinc-600">Cor da Borda</span>
+              <span className="text-[#62647A]">Cor da Borda</span>
               <div className="flex items-center gap-2">
                 <input
                   type="color"
                   value={borderColor}
                   onChange={(e) => setBorderColor(e.target.value)}
-                  className="w-6 h-6 rounded border border-zinc-200 cursor-pointer bg-transparent"
+                  className="w-6 h-6 rounded border border-[#E7E7F0] cursor-pointer bg-transparent"
                 />
-                <span className="font-mono text-zinc-800">{borderColor}</span>
+                <span className="font-mono text-[#17172A]">{borderColor}</span>
               </div>
             </div>
 
             <div>
-              <div className="flex justify-between text-xs text-zinc-700 mb-1">
+              <div className="flex justify-between text-xs text-[#62647A] mb-1">
                 <span>Opacidade da Borda</span>
-                <span className="font-mono text-zinc-900 font-semibold">{Math.round(borderOpacity * 100)}%</span>
+                <span className="font-mono text-[#7655D9] font-semibold">{Math.round(borderOpacity * 100)}%</span>
               </div>
               <input
                 type="range"
@@ -285,14 +285,14 @@ export const GlassStudio: React.FC = () => {
                 step="0.05"
                 value={borderOpacity}
                 onChange={(e) => setBorderOpacity(parseFloat(e.target.value))}
-                className="w-full accent-indigo-600 bg-zinc-200 h-1.5 rounded-lg appearance-none cursor-pointer"
+                className="w-full accent-[#7655D9] bg-[#E7E7F0] h-1.5 rounded-lg appearance-none cursor-pointer"
               />
             </div>
 
             <div>
-              <div className="flex justify-between text-xs text-zinc-700 mb-1">
+              <div className="flex justify-between text-xs text-[#62647A] mb-1">
                 <span>Espessura da Borda</span>
-                <span className="font-mono text-zinc-900 font-semibold">{borderWidth}px</span>
+                <span className="font-mono text-[#7655D9] font-semibold">{borderWidth}px</span>
               </div>
               <input
                 type="range"
@@ -300,14 +300,14 @@ export const GlassStudio: React.FC = () => {
                 max="8"
                 value={borderWidth}
                 onChange={(e) => setBorderWidth(parseInt(e.target.value, 10))}
-                className="w-full accent-indigo-600 bg-zinc-200 h-1.5 rounded-lg appearance-none cursor-pointer"
+                className="w-full accent-[#7655D9] bg-[#E7E7F0] h-1.5 rounded-lg appearance-none cursor-pointer"
               />
             </div>
 
             <div>
-              <div className="flex justify-between text-xs text-zinc-700 mb-1">
+              <div className="flex justify-between text-xs text-[#62647A] mb-1">
                 <span>Raio dos Cantos</span>
-                <span className="font-mono text-zinc-900 font-semibold">{borderRadius}px</span>
+                <span className="font-mono text-[#7655D9] font-semibold">{borderRadius}px</span>
               </div>
               <input
                 type="range"
@@ -315,18 +315,18 @@ export const GlassStudio: React.FC = () => {
                 max="40"
                 value={borderRadius}
                 onChange={(e) => setBorderRadius(parseInt(e.target.value, 10))}
-                className="w-full accent-indigo-600 bg-zinc-200 h-1.5 rounded-lg appearance-none cursor-pointer"
+                className="w-full accent-[#7655D9] bg-[#E7E7F0] h-1.5 rounded-lg appearance-none cursor-pointer"
               />
             </div>
           </div>
 
           {/* Shadow Controls */}
-          <div className="space-y-3 pt-2 border-t border-zinc-100">
-            <span className="text-xs font-semibold text-zinc-800 block">Sombra (Drop Shadow)</span>
+          <div className="space-y-3 pt-2 border-t border-[#E7E7F0]">
+            <span className="text-xs font-semibold text-[#17172A] block">Sombra (Drop Shadow)</span>
             <div>
-              <div className="flex justify-between text-xs text-zinc-700 mb-1">
+              <div className="flex justify-between text-xs text-[#62647A] mb-1">
                 <span>Desfoque da Sombra</span>
-                <span className="font-mono text-zinc-900 font-semibold">{shadowBlur}px</span>
+                <span className="font-mono text-[#7655D9] font-semibold">{shadowBlur}px</span>
               </div>
               <input
                 type="range"
@@ -334,14 +334,14 @@ export const GlassStudio: React.FC = () => {
                 max="50"
                 value={shadowBlur}
                 onChange={(e) => setShadowBlur(parseInt(e.target.value, 10))}
-                className="w-full accent-indigo-600 bg-zinc-200 h-1.5 rounded-lg appearance-none cursor-pointer"
+                className="w-full accent-[#7655D9] bg-[#E7E7F0] h-1.5 rounded-lg appearance-none cursor-pointer"
               />
             </div>
 
             <div>
-              <div className="flex justify-between text-xs text-zinc-700 mb-1">
+              <div className="flex justify-between text-xs text-[#62647A] mb-1">
                 <span>Deslocamento Y da Sombra</span>
-                <span className="font-mono text-zinc-900 font-semibold">{shadowY}px</span>
+                <span className="font-mono text-[#7655D9] font-semibold">{shadowY}px</span>
               </div>
               <input
                 type="range"
@@ -349,14 +349,14 @@ export const GlassStudio: React.FC = () => {
                 max="30"
                 value={shadowY}
                 onChange={(e) => setShadowY(parseInt(e.target.value, 10))}
-                className="w-full accent-indigo-600 bg-zinc-200 h-1.5 rounded-lg appearance-none cursor-pointer"
+                className="w-full accent-[#7655D9] bg-[#E7E7F0] h-1.5 rounded-lg appearance-none cursor-pointer"
               />
             </div>
 
             <div>
-              <div className="flex justify-between text-xs text-zinc-700 mb-1">
+              <div className="flex justify-between text-xs text-[#62647A] mb-1">
                 <span>Opacidade da Sombra</span>
-                <span className="font-mono text-zinc-900 font-semibold">{Math.round(shadowOpacity * 100)}%</span>
+                <span className="font-mono text-[#7655D9] font-semibold">{Math.round(shadowOpacity * 100)}%</span>
               </div>
               <input
                 type="range"
@@ -365,14 +365,14 @@ export const GlassStudio: React.FC = () => {
                 step="0.02"
                 value={shadowOpacity}
                 onChange={(e) => setShadowOpacity(parseFloat(e.target.value))}
-                className="w-full accent-indigo-600 bg-zinc-200 h-1.5 rounded-lg appearance-none cursor-pointer"
+                className="w-full accent-[#7655D9] bg-[#E7E7F0] h-1.5 rounded-lg appearance-none cursor-pointer"
               />
             </div>
           </div>
 
           {/* Accessibility Note */}
-          <div className="p-3 bg-amber-50 border border-amber-200/80 rounded-xl flex items-start gap-2 text-[11px] text-amber-800 leading-relaxed">
-            <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+          <div className="p-3 bg-[#EEF2FF] border border-[#D6D1F3] rounded-xl flex items-start gap-2 text-[11px] text-[#5B3DB5] leading-relaxed">
+            <Info className="w-4 h-4 text-[#7655D9] shrink-0 mt-0.5" />
             <span>
               <strong>Atenção ao Contraste:</strong> O efeito translúcido exige validação do contraste de texto sobre fotos ou fundos dinâmicos para conformidade WCAG AA.
             </span>

@@ -1,5 +1,44 @@
 @import "tailwindcss";
 
+@theme {
+  --color-canvas: #FBFBFE;
+  --color-surface-alt: #F4F5FA;
+  --color-card: #FFFFFF;
+  --color-lavender-subtle: #EEF2FF;
+  --color-purple-subtle: #F3EEFF;
+  --color-purple-primary: #7655D9;
+  --color-purple-dark: #5B3DB5;
+  --color-lavender: #A99AEF;
+  --color-lavender-blue: #8EA5FF;
+  --color-lilac-light: #DCD4FF;
+  --color-text-main: #17172A;
+  --color-text-secondary: #62647A;
+  --color-text-muted: #85869A;
+  --color-border-subtle: #E7E7F0;
+  --color-border-highlight: #D6D1F3;
+  --color-surface-hover: #F5F2FF;
+  --color-focus: #7655D9;
+}
+
+:root {
+  --bg-canvas: #FBFBFE;
+  --bg-surface-alt: #F4F5FA;
+  --bg-card: #FFFFFF;
+  --bg-lavender-subtle: #EEF2FF;
+  --bg-purple-subtle: #F3EEFF;
+  --primary: #7655D9;
+  --primary-dark: #5B3DB5;
+  --lavender: #A99AEF;
+  --lavender-blue: #8EA5FF;
+  --lilac-light: #DCD4FF;
+  --text-main: #17172A;
+  --text-secondary: #62647A;
+  --text-muted: #85869A;
+  --border-subtle: #E7E7F0;
+  --border-highlight: #D6D1F3;
+  --surface-hover: #F5F2FF;
+}
+
 @layer base {
   * {
     box-sizing: border-box;
@@ -13,9 +52,16 @@
     margin: 0;
     padding: 0;
     overflow: hidden;
+    background-color: #FBFBFE;
+    color: #17172A;
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     user-select: none;
     -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection {
+    background-color: #DCD4FF;
+    color: #5B3DB5;
   }
 }
 
@@ -30,12 +76,27 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(160, 160, 175, 0.3);
+  background: #D6D1F3;
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(160, 160, 175, 0.5);
+  background: #A99AEF;
+}
+
+/* Subtle graphic identity details */
+.bg-dotted-grid {
+  background-image: radial-gradient(rgba(118, 85, 217, 0.12) 1.2px, transparent 1.2px);
+  background-size: 24px 24px;
+}
+
+.bg-dotted-grid-subtle {
+  background-image: radial-gradient(rgba(142, 165, 255, 0.15) 1px, transparent 1px);
+  background-size: 18px 18px;
+}
+
+.ambient-hero-glow {
+  background: radial-gradient(800px circle at 50% 0px, rgba(238, 242, 255, 0.8), rgba(243, 238, 255, 0.4) 40%, transparent 80%);
 }
 
 @keyframes slideIn {

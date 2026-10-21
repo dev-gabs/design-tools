@@ -297,24 +297,24 @@ export const PatternShapeStudio: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col w-screen h-screen overflow-hidden bg-zinc-50 text-zinc-900 select-none">
+    <div className="flex flex-col w-screen h-screen overflow-hidden bg-[#FBFBFE] text-[#17172A] select-none">
       {/* Top Chromalab Bar */}
-      <header className="h-14 bg-white border-b border-zinc-200/80 px-4 md:px-6 flex items-center justify-between gap-3 shrink-0 z-20">
+      <header className="h-14 bg-white border-b border-[#E7E7F0] px-4 md:px-6 flex items-center justify-between gap-3 shrink-0 z-20">
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigateToTool('hub')}
-            className="flex items-center gap-1.5 text-xs font-medium text-zinc-500 hover:text-zinc-900 transition-colors py-1.5 px-2.5 rounded-lg hover:bg-zinc-100 cursor-pointer"
+            className="flex items-center gap-1.5 text-xs font-medium text-[#62647A] hover:text-[#7655D9] transition-colors py-1.5 px-2.5 rounded-lg hover:bg-[#F5F2FF] cursor-pointer"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Chromalab</span>
           </button>
 
-          <div className="h-4 w-[1px] bg-zinc-200" />
+          <div className="h-4 w-[1px] bg-[#E7E7F0]" />
 
           <div>
-            <h1 className="text-sm font-bold tracking-tight text-zinc-900 flex items-center gap-2">
+            <h1 className="text-sm font-bold tracking-tight text-[#17172A] flex items-center gap-2">
               Pattern & Shape Studio
-              <span className="text-[10px] bg-pink-50 text-pink-600 font-semibold px-2 py-0.5 rounded-full border border-pink-100">
+              <span className="text-[10px] bg-[#EEF2FF] text-[#7655D9] font-semibold px-2 py-0.5 rounded-full border border-[#D6D1F3]">
                 Módulo 03
               </span>
             </h1>
@@ -325,7 +325,7 @@ export const PatternShapeStudio: React.FC = () => {
         <div className="flex items-center gap-2">
           <button
             onClick={handleCopySvgCode}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-800 rounded-lg text-xs font-medium transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-[#F4F5FA] hover:bg-[#F5F2FF] border border-[#E7E7F0] hover:border-[#D6D1F3] text-[#17172A] rounded-lg text-xs font-medium transition-colors cursor-pointer"
           >
             <Copy className="w-3.5 h-3.5" />
             <span className="hidden md:inline">Copiar SVG</span>
@@ -333,15 +333,15 @@ export const PatternShapeStudio: React.FC = () => {
 
           <button
             onClick={handleExportSvg}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-800 rounded-lg text-xs font-medium transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-[#F4F5FA] hover:bg-[#F5F2FF] border border-[#E7E7F0] hover:border-[#D6D1F3] text-[#17172A] rounded-lg text-xs font-medium transition-colors cursor-pointer"
           >
-            <Download className="w-3.5 h-3.5 text-pink-600" />
+            <Download className="w-3.5 h-3.5 text-[#7655D9]" />
             <span>Baixar SVG</span>
           </button>
 
           <button
             onClick={handleExportPng}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 hover:bg-zinc-800 text-white rounded-lg text-xs font-semibold shadow-sm transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-[#7655D9] hover:bg-[#5B3DB5] text-white rounded-lg text-xs font-semibold shadow-sm shadow-[#7655D9]/20 transition-colors cursor-pointer"
           >
             <Download className="w-3.5 h-3.5" />
             <span>Baixar PNG</span>
@@ -352,7 +352,7 @@ export const PatternShapeStudio: React.FC = () => {
       {/* Main Workspace */}
       <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
         {/* Controls Panel */}
-        <aside className="w-full md:w-80 bg-white border-b md:border-b-0 md:border-r border-zinc-200/80 p-5 overflow-y-auto space-y-4 shrink-0">
+        <aside className="w-full md:w-80 bg-white border-b md:border-b-0 md:border-r border-[#E7E7F0] p-5 overflow-y-auto space-y-4 shrink-0">
           {/* Pattern Type */}
           <div>
             <label className="text-xs font-semibold text-zinc-800 block mb-1.5">
@@ -372,10 +372,10 @@ export const PatternShapeStudio: React.FC = () => {
                 <button
                   key={pt.id}
                   onClick={() => setPatternType(pt.id as PatternType)}
-                  className={`py-2 px-2.5 rounded-lg border text-left text-[11px] font-medium transition-all ${
+                  className={`py-2 px-2.5 rounded-lg border text-left text-[11px] font-medium transition-all cursor-pointer ${
                     patternType === pt.id
-                      ? 'bg-zinc-900 border-zinc-900 text-white'
-                      : 'bg-zinc-50 border-zinc-200 text-zinc-600 hover:text-zinc-900'
+                      ? 'bg-[#7655D9] border-[#7655D9] text-white shadow-xs'
+                      : 'bg-[#F4F5FA] border-[#E7E7F0] text-[#62647A] hover:text-[#17172A] hover:bg-[#F5F2FF]'
                   }`}
                 >
                   {pt.label}
@@ -385,67 +385,67 @@ export const PatternShapeStudio: React.FC = () => {
           </div>
 
           {/* Colors */}
-          <div className="space-y-2.5 pt-2 border-t border-zinc-100">
-            <span className="text-xs font-semibold text-zinc-800 block">Cores do Padrão</span>
+          <div className="space-y-2.5 pt-2 border-t border-[#E7E7F0]">
+            <span className="text-xs font-semibold text-[#17172A] block">Cores do Padrão</span>
 
             <div className="flex items-center justify-between">
-              <span className="text-xs text-zinc-600">Cor Primária</span>
+              <span className="text-xs text-[#62647A]">Cor Primária</span>
               <div className="flex items-center gap-2">
                 <input
                   type="color"
                   value={primaryColor}
                   onChange={(e) => setPrimaryColor(e.target.value)}
-                  className="w-6 h-6 rounded border border-zinc-200 cursor-pointer bg-transparent"
+                  className="w-6 h-6 rounded border border-[#E7E7F0] cursor-pointer bg-transparent"
                 />
-                <span className="text-xs font-mono uppercase text-zinc-800">{primaryColor}</span>
+                <span className="text-xs font-mono uppercase text-[#17172A]">{primaryColor}</span>
               </div>
             </div>
 
             <div className="flex items-center justify-between">
-              <span className="text-xs text-zinc-600">Cor Secundária</span>
+              <span className="text-xs text-[#62647A]">Cor Secundária</span>
               <div className="flex items-center gap-2">
                 <input
                   type="color"
                   value={secondaryColor}
                   onChange={(e) => setSecondaryColor(e.target.value)}
-                  className="w-6 h-6 rounded border border-zinc-200 cursor-pointer bg-transparent"
+                  className="w-6 h-6 rounded border border-[#E7E7F0] cursor-pointer bg-transparent"
                 />
-                <span className="text-xs font-mono uppercase text-zinc-800">{secondaryColor}</span>
+                <span className="text-xs font-mono uppercase text-[#17172A]">{secondaryColor}</span>
               </div>
             </div>
 
             <div className="flex items-center justify-between">
-              <span className="text-xs text-zinc-600">Fundo Transparente</span>
+              <span className="text-xs text-[#62647A]">Fundo Transparente</span>
               <input
                 type="checkbox"
                 checked={transparentBg}
                 onChange={(e) => setTransparentBg(e.target.checked)}
-                className="w-4 h-4 accent-indigo-600 rounded cursor-pointer"
+                className="w-4 h-4 accent-[#7655D9] rounded cursor-pointer"
               />
             </div>
 
             {!transparentBg && (
               <div className="flex items-center justify-between">
-                <span className="text-xs text-zinc-600">Cor de Fundo</span>
+                <span className="text-xs text-[#62647A]">Cor de Fundo</span>
                 <div className="flex items-center gap-2">
                   <input
                     type="color"
                     value={bgColor}
                     onChange={(e) => setBgColor(e.target.value)}
-                    className="w-6 h-6 rounded border border-zinc-200 cursor-pointer bg-transparent"
+                    className="w-6 h-6 rounded border border-[#E7E7F0] cursor-pointer bg-transparent"
                   />
-                  <span className="text-xs font-mono uppercase text-zinc-800">{bgColor}</span>
+                  <span className="text-xs font-mono uppercase text-[#17172A]">{bgColor}</span>
                 </div>
               </div>
             )}
           </div>
 
           {/* Dynamic Sliders */}
-          <div className="space-y-3 pt-2 border-t border-zinc-100">
+          <div className="space-y-3 pt-2 border-t border-[#E7E7F0]">
             <div>
-              <div className="flex justify-between text-xs text-zinc-700 mb-1">
+              <div className="flex justify-between text-xs text-[#62647A] mb-1">
                 <span>Espaçamento / Passo</span>
-                <span className="font-mono text-zinc-900 font-semibold">{spacing}px</span>
+                <span className="font-mono text-[#7655D9] font-semibold">{spacing}px</span>
               </div>
               <input
                 type="range"
@@ -453,14 +453,14 @@ export const PatternShapeStudio: React.FC = () => {
                 max="128"
                 value={spacing}
                 onChange={(e) => setSpacing(parseInt(e.target.value, 10))}
-                className="w-full accent-indigo-600 bg-zinc-200 h-1.5 rounded-lg appearance-none cursor-pointer"
+                className="w-full accent-[#7655D9] bg-[#E7E7F0] h-1.5 rounded-lg appearance-none cursor-pointer"
               />
             </div>
 
             <div>
-              <div className="flex justify-between text-xs text-zinc-700 mb-1">
+              <div className="flex justify-between text-xs text-[#62647A] mb-1">
                 <span>Escala</span>
-                <span className="font-mono text-zinc-900 font-semibold">{scale.toFixed(1)}x</span>
+                <span className="font-mono text-[#7655D9] font-semibold">{scale.toFixed(1)}x</span>
               </div>
               <input
                 type="range"
@@ -469,14 +469,14 @@ export const PatternShapeStudio: React.FC = () => {
                 step="0.1"
                 value={scale}
                 onChange={(e) => setScale(parseFloat(e.target.value))}
-                className="w-full accent-indigo-600 bg-zinc-200 h-1.5 rounded-lg appearance-none cursor-pointer"
+                className="w-full accent-[#7655D9] bg-[#E7E7F0] h-1.5 rounded-lg appearance-none cursor-pointer"
               />
             </div>
 
             <div>
-              <div className="flex justify-between text-xs text-zinc-700 mb-1">
+              <div className="flex justify-between text-xs text-[#62647A] mb-1">
                 <span>Rotação</span>
-                <span className="font-mono text-zinc-900 font-semibold">{rotation}°</span>
+                <span className="font-mono text-[#7655D9] font-semibold">{rotation}°</span>
               </div>
               <input
                 type="range"
@@ -484,14 +484,14 @@ export const PatternShapeStudio: React.FC = () => {
                 max="360"
                 value={rotation}
                 onChange={(e) => setRotation(parseInt(e.target.value, 10))}
-                className="w-full accent-indigo-600 bg-zinc-200 h-1.5 rounded-lg appearance-none cursor-pointer"
+                className="w-full accent-[#7655D9] bg-[#E7E7F0] h-1.5 rounded-lg appearance-none cursor-pointer"
               />
             </div>
 
             <div>
-              <div className="flex justify-between text-xs text-zinc-700 mb-1">
+              <div className="flex justify-between text-xs text-[#62647A] mb-1">
                 <span>Espessura do Traço</span>
-                <span className="font-mono text-zinc-900 font-semibold">{strokeWidth}px</span>
+                <span className="font-mono text-[#7655D9] font-semibold">{strokeWidth}px</span>
               </div>
               <input
                 type="range"
@@ -499,14 +499,14 @@ export const PatternShapeStudio: React.FC = () => {
                 max="12"
                 value={strokeWidth}
                 onChange={(e) => setStrokeWidth(parseInt(e.target.value, 10))}
-                className="w-full accent-indigo-600 bg-zinc-200 h-1.5 rounded-lg appearance-none cursor-pointer"
+                className="w-full accent-[#7655D9] bg-[#E7E7F0] h-1.5 rounded-lg appearance-none cursor-pointer"
               />
             </div>
 
             <div>
-              <div className="flex justify-between text-xs text-zinc-700 mb-1">
+              <div className="flex justify-between text-xs text-[#62647A] mb-1">
                 <span>Opacidade</span>
-                <span className="font-mono text-zinc-900 font-semibold">{Math.round(opacity * 100)}%</span>
+                <span className="font-mono text-[#7655D9] font-semibold">{Math.round(opacity * 100)}%</span>
               </div>
               <input
                 type="range"
@@ -515,13 +515,13 @@ export const PatternShapeStudio: React.FC = () => {
                 step="0.05"
                 value={opacity}
                 onChange={(e) => setOpacity(parseFloat(e.target.value))}
-                className="w-full accent-indigo-600 bg-zinc-200 h-1.5 rounded-lg appearance-none cursor-pointer"
+                className="w-full accent-[#7655D9] bg-[#E7E7F0] h-1.5 rounded-lg appearance-none cursor-pointer"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-2 pt-1">
               <div>
-                <span className="text-[10px] text-zinc-500 font-medium block mb-1">Largura (px)</span>
+                <span className="text-[10px] text-[#85869A] font-medium block mb-1">Largura (px)</span>
                 <input
                   type="number"
                   min="300"
@@ -529,11 +529,11 @@ export const PatternShapeStudio: React.FC = () => {
                   step="50"
                   value={width}
                   onChange={(e) => setWidth(parseInt(e.target.value, 10) || 800)}
-                  className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-2 py-1 text-xs font-mono text-zinc-800"
+                  className="w-full bg-[#F4F5FA] border border-[#E7E7F0] focus:border-[#7655D9] rounded-lg px-2 py-1 text-xs font-mono text-[#17172A] focus:outline-none"
                 />
               </div>
               <div>
-                <span className="text-[10px] text-zinc-500 font-medium block mb-1">Altura (px)</span>
+                <span className="text-[10px] text-[#85869A] font-medium block mb-1">Altura (px)</span>
                 <input
                   type="number"
                   min="300"
@@ -541,16 +541,16 @@ export const PatternShapeStudio: React.FC = () => {
                   step="50"
                   value={height}
                   onChange={(e) => setHeight(parseInt(e.target.value, 10) || 800)}
-                  className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-2 py-1 text-xs font-mono text-zinc-800"
+                  className="w-full bg-[#F4F5FA] border border-[#E7E7F0] focus:border-[#7655D9] rounded-lg px-2 py-1 text-xs font-mono text-[#17172A] focus:outline-none"
                 />
               </div>
             </div>
 
             {patternType === 'organic-blobs' && (
               <div>
-                <div className="flex justify-between text-xs text-zinc-700 mb-1">
+                <div className="flex justify-between text-xs text-[#62647A] mb-1">
                   <span>Densidade de Blobs</span>
-                  <span className="font-mono text-zinc-900 font-semibold">{density}</span>
+                  <span className="font-mono text-[#7655D9] font-semibold">{density}</span>
                 </div>
                 <input
                   type="range"
@@ -558,7 +558,7 @@ export const PatternShapeStudio: React.FC = () => {
                   max="30"
                   value={density}
                   onChange={(e) => setDensity(parseInt(e.target.value, 10))}
-                  className="w-full accent-indigo-600 bg-zinc-200 h-1.5 rounded-lg appearance-none cursor-pointer"
+                  className="w-full accent-[#7655D9] bg-[#E7E7F0] h-1.5 rounded-lg appearance-none cursor-pointer"
                 />
               </div>
             )}
@@ -567,17 +567,18 @@ export const PatternShapeStudio: React.FC = () => {
           {/* Random Variation */}
           <button
             onClick={() => setSeed(Math.floor(Math.random() * 1000000))}
-            className="w-full py-2 bg-zinc-100 hover:bg-zinc-200 text-zinc-800 rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full py-2 bg-[#F4F5FA] hover:bg-[#F5F2FF] border border-[#E7E7F0] hover:border-[#D6D1F3] text-[#17172A] rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-xs"
           >
-            <Shuffle className="w-3.5 h-3.5" />
+            <Shuffle className="w-3.5 h-3.5 text-[#7655D9]" />
             <span>Nova Variação (Seed)</span>
           </button>
         </aside>
 
         {/* Pattern Canvas Preview */}
-        <main className="flex-1 p-6 md:p-10 flex items-center justify-center overflow-auto bg-zinc-100/70">
+        <main className="flex-1 p-6 md:p-10 flex items-center justify-center overflow-auto bg-[#FBFBFE] relative">
+          <div className="absolute inset-0 pointer-events-none bg-dotted-grid-subtle opacity-60" />
           <div
-            className="relative shadow-2xl rounded-2xl overflow-hidden border border-zinc-200 transition-all max-w-full max-h-full"
+            className="relative shadow-2xl rounded-2xl overflow-hidden border border-[#D6D1F3]/80 transition-all max-w-full max-h-full z-10"
             style={{
               width: `${Math.min(width, 700)}px`,
               aspectRatio: `${width} / ${height}`,

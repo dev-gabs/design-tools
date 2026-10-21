@@ -485,7 +485,7 @@ export const MeshGradientStudio: React.FC = () => {
   ]);
 
   return (
-    <div className="flex flex-col w-screen h-screen overflow-hidden bg-zinc-50 text-zinc-900 select-none">
+    <div className="flex flex-col w-screen h-screen overflow-hidden bg-[#FBFBFE] text-[#17172A] select-none">
       {/* Top Navbar */}
       <Navbar
         onBackToHub={() => navigateToTool('hub')}

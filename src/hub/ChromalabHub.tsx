@@ -69,17 +69,21 @@ export const ChromalabHub: React.FC = () => {
   });
 
   return (
-    <div className="min-h-screen w-full bg-[#FCFCFD] text-zinc-900 flex flex-col overflow-y-auto selection:bg-indigo-500 selection:text-white">
+    <div className="min-h-screen w-full bg-[#FBFBFE] text-[#17172A] flex flex-col overflow-y-auto selection:bg-[#DCD4FF] selection:text-[#5B3DB5] relative">
+      {/* Ambient background decoration */}
+      <div className="absolute top-0 inset-x-0 h-96 ambient-hero-glow pointer-events-none" />
+      <div className="absolute top-0 right-0 w-96 h-96 bg-dotted-grid opacity-60 pointer-events-none" />
+
       {/* Top Header */}
-      <header className="h-16 border-b border-zinc-200/70 bg-white/80 backdrop-blur-md px-6 md:px-12 flex items-center justify-between sticky top-0 z-30">
+      <header className="h-16 border-b border-[#E7E7F0] bg-white/80 backdrop-blur-md px-6 md:px-12 flex items-center justify-between sticky top-0 z-30">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-xl bg-zinc-900 text-white flex items-center justify-center font-bold tracking-tighter text-sm shadow-sm">
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#5B3DB5] to-[#7655D9] text-white flex items-center justify-center font-bold tracking-tighter text-sm shadow-sm shadow-[#7655D9]/20">
             Ch
           </div>
-          <span className="font-bold text-base tracking-tight text-zinc-900">
-            Chroma<span className="text-zinc-500 font-normal">lab</span>
+          <span className="font-bold text-base tracking-tight text-[#17172A]">
+            Chroma<span className="text-[#7655D9] font-semibold">lab</span>
           </span>
-          <span className="text-[10px] font-mono text-zinc-400 bg-zinc-100 px-2 py-0.5 rounded-full hidden sm:inline">
+          <span className="text-[10px] font-mono text-[#7655D9] bg-[#EEF2FF] border border-[#D6D1F3] px-2 py-0.5 rounded-full hidden sm:inline">
             v2.0
           </span>
         </div>
@@ -87,44 +91,44 @@ export const ChromalabHub: React.FC = () => {
         {/* Search Input */}
         <div className="flex items-center gap-2 max-w-xs w-full">
           <div className="relative w-full">
-            <Search className="w-3.5 h-3.5 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-3.5 h-3.5 text-[#85869A] absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               placeholder="Buscar ferramentas..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-zinc-100/80 hover:bg-zinc-100 focus:bg-white border border-transparent focus:border-zinc-300 rounded-xl pl-8 pr-3 py-1.5 text-xs text-zinc-900 placeholder:text-zinc-400 focus:outline-none transition-all"
+              className="w-full bg-[#F4F5FA] hover:bg-white focus:bg-white border border-[#E7E7F0] focus:border-[#7655D9] rounded-xl pl-8 pr-3 py-1.5 text-xs text-[#17172A] placeholder:text-[#85869A] focus:outline-none transition-all shadow-2xs"
             />
           </div>
         </div>
       </header>
 
       {/* Hero Section */}
-      <section className="px-6 md:px-12 pt-14 pb-10 max-w-5xl mx-auto w-full text-center md:text-left">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-100 border border-zinc-200/60 text-[11px] font-medium text-zinc-700 mb-4">
-          <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
+      <section className="px-6 md:px-12 pt-14 pb-10 max-w-5xl mx-auto w-full text-center md:text-left relative z-10">
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EEF2FF] border border-[#D6D1F3] text-[11px] font-medium text-[#7655D9] mb-4 shadow-2xs">
+          <Sparkles className="w-3.5 h-3.5 text-[#7655D9]" />
           <span>Suíte de Ferramentas Visuais</span>
         </div>
 
-        <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-zinc-900 leading-[1.15]">
+        <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-[#17172A] leading-[1.15]">
           Design, sem complicação.
         </h1>
-        <p className="text-base md:text-lg text-zinc-500 mt-2.5 max-w-2xl font-normal leading-relaxed">
+        <p className="text-base md:text-lg text-[#62647A] mt-2.5 max-w-2xl font-normal leading-relaxed">
           Ferramentas visuais para criar cores, formas, texturas e interfaces.
         </p>
       </section>
 
       {/* Tools Catalog Grid */}
-      <main className="px-6 md:px-12 pb-20 max-w-5xl mx-auto w-full flex-1">
+      <main className="px-6 md:px-12 pb-20 max-w-5xl mx-auto w-full flex-1 relative z-10">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredTools.map((tool) => (
             <div
               key={tool.id}
               onClick={() => navigateToTool(tool.id)}
-              className="group bg-white rounded-2xl border border-zinc-200/80 overflow-hidden shadow-sm hover:shadow-md hover:border-zinc-300 transition-all duration-200 flex flex-col cursor-pointer"
+              className="group bg-white rounded-2xl border border-[#E7E7F0] overflow-hidden shadow-sm hover:shadow-lg hover:shadow-[#7655D9]/5 hover:border-[#D6D1F3] transition-all duration-200 flex flex-col cursor-pointer"
             >
               {/* Tool Preview Graphic */}
-              <div className="h-44 w-full relative overflow-hidden bg-zinc-100 flex items-center justify-center border-b border-zinc-100">
+              <div className="h-44 w-full relative overflow-hidden bg-[#F4F5FA] flex items-center justify-center border-b border-[#E7E7F0]">
                 {/* 1. Mesh Gradient Preview */}
                 {tool.id === 'mesh' && (
                   <div
@@ -143,7 +147,7 @@ export const ChromalabHub: React.FC = () => {
                 {/* 2. Color Palette Preview */}
                 {tool.id === 'palette' && (
                   <div className="w-full h-full flex transition-transform duration-500 group-hover:scale-105">
-                    {['#4F46E5', '#06B6D4', '#10B981', '#F59E0B', '#EC4899'].map((c, i) => (
+                    {['#7655D9', '#8EA5FF', '#10B981', '#F59E0B', '#EC4899'].map((c, i) => (
                       <div key={i} className="flex-1 h-full" style={{ backgroundColor: c }} />
                     ))}
                   </div>
@@ -155,13 +159,13 @@ export const ChromalabHub: React.FC = () => {
                     <svg className="w-full h-full" viewBox="0 0 200 120">
                       <defs>
                         <pattern id="hub-grid" width="20" height="20" patternUnits="userSpaceOnUse">
-                          <circle cx="10" cy="10" r="3" fill="#38BDF8" fillOpacity="0.8" />
-                          <circle cx="20" cy="20" r="1.5" fill="#EC4899" fillOpacity="0.7" />
+                          <circle cx="10" cy="10" r="3" fill="#8EA5FF" fillOpacity="0.8" />
+                          <circle cx="20" cy="20" r="1.5" fill="#A99AEF" fillOpacity="0.7" />
                         </pattern>
                       </defs>
                       <rect width="200" height="120" fill="url(#hub-grid)" />
-                      <circle cx="100" cy="60" r="35" fill="#EC4899" fillOpacity="0.35" />
-                      <circle cx="100" cy="60" r="20" fill="#38BDF8" fillOpacity="0.6" />
+                      <circle cx="100" cy="60" r="35" fill="#7655D9" fillOpacity="0.35" />
+                      <circle cx="100" cy="60" r="20" fill="#8EA5FF" fillOpacity="0.6" />
                     </svg>
                   </div>
                 )}
@@ -172,7 +176,7 @@ export const ChromalabHub: React.FC = () => {
                     className="w-full h-full bg-zinc-900 transition-transform duration-500 group-hover:scale-105 relative flex items-center justify-center"
                     style={{
                       backgroundImage: `
-                        radial-gradient(circle at 50% 50%, #F59E0B 0%, #B45309 60%, #18181B 100%)`,
+                        radial-gradient(circle at 50% 50%, #7655D9 0%, #5B3DB5 60%, #17172A 100%)`,
                     }}
                   >
                     <div
@@ -190,14 +194,14 @@ export const ChromalabHub: React.FC = () => {
 
                 {/* 5. Type System Preview */}
                 {tool.id === 'type' && (
-                  <div className="w-full h-full bg-white flex flex-col justify-center px-6 transition-transform duration-500 group-hover:scale-105">
-                    <span className="text-2xl font-black text-zinc-900 tracking-tight leading-none">
+                  <div className="w-full h-full bg-[#FFFFFF] flex flex-col justify-center px-6 transition-transform duration-500 group-hover:scale-105">
+                    <span className="text-2xl font-black text-[#17172A] tracking-tight leading-none">
                       Aa Bb Gg
                     </span>
-                    <span className="text-xs text-zinc-500 font-medium mt-1">
+                    <span className="text-xs text-[#62647A] font-medium mt-1">
                       Modular Typographic Scale
                     </span>
-                    <div className="flex gap-1.5 mt-2 font-mono text-[9px] text-zinc-400">
+                    <div className="flex gap-1.5 mt-2 font-mono text-[9px] text-[#85869A]">
                       <span>48px</span>
                       <span>•</span>
                       <span>32px</span>
@@ -214,7 +218,7 @@ export const ChromalabHub: React.FC = () => {
                   <div
                     className="w-full h-full relative flex items-center justify-center p-6 overflow-hidden transition-transform duration-500 group-hover:scale-105"
                     style={{
-                      background: 'linear-gradient(135deg, #6366F1 0%, #EC4899 50%, #F59E0B 100%)',
+                      background: 'linear-gradient(135deg, #7655D9 0%, #8EA5FF 50%, #DCD4FF 100%)',
                     }}
                   >
                     <div className="w-36 h-20 rounded-xl bg-white/20 backdrop-blur-md border border-white/40 shadow-lg p-2.5 flex flex-col justify-between">
@@ -225,12 +229,12 @@ export const ChromalabHub: React.FC = () => {
                 )}
 
                 {/* Category Badge */}
-                <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-md border border-zinc-200/80 rounded-lg px-2 py-0.5 text-[10px] font-semibold text-zinc-700 shadow-xs">
+                <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-md border border-[#E7E7F0] rounded-lg px-2 py-0.5 text-[10px] font-semibold text-[#62647A] shadow-2xs">
                   {tool.category}
                 </div>
 
                 {tool.badge && (
-                  <div className="absolute top-3 right-3 bg-indigo-50 border border-indigo-200/80 rounded-lg px-2 py-0.5 text-[10px] font-semibold text-indigo-700 shadow-xs">
+                  <div className="absolute top-3 right-3 bg-[#EEF2FF] border border-[#D6D1F3] rounded-lg px-2 py-0.5 text-[10px] font-semibold text-[#7655D9] shadow-2xs">
                     {tool.badge}
                   </div>
                 )}
@@ -239,18 +243,18 @@ export const ChromalabHub: React.FC = () => {
               {/* Card Body */}
               <div className="p-5 flex-1 flex flex-col justify-between">
                 <div>
-                  <h3 className="text-base font-bold text-zinc-900 group-hover:text-indigo-600 transition-colors flex items-center justify-between">
+                  <h3 className="text-base font-bold text-[#17172A] group-hover:text-[#7655D9] transition-colors flex items-center justify-between">
                     <span>{tool.name}</span>
-                    <ArrowRight className="w-4 h-4 text-zinc-400 group-hover:text-indigo-600 group-hover:translate-x-1 transition-all" />
+                    <ArrowRight className="w-4 h-4 text-[#85869A] group-hover:text-[#7655D9] group-hover:translate-x-1 transition-all" />
                   </h3>
-                  <p className="text-xs text-zinc-500 mt-1.5 leading-relaxed line-clamp-2">
+                  <p className="text-xs text-[#62647A] mt-1.5 leading-relaxed line-clamp-2">
                     {tool.tagline}
                   </p>
                 </div>
 
-                <div className="pt-4 mt-4 border-t border-zinc-100 flex items-center justify-between text-xs text-zinc-400">
-                  <span className="text-[11px] font-medium text-zinc-400">Disponível localmente</span>
-                  <span className="text-xs font-semibold text-indigo-600 group-hover:underline">
+                <div className="pt-4 mt-4 border-t border-[#E7E7F0] flex items-center justify-between text-xs text-[#85869A]">
+                  <span className="text-[11px] font-medium text-[#85869A]">Disponível localmente</span>
+                  <span className="text-xs font-semibold text-[#7655D9] group-hover:underline">
                     Abrir ferramenta
                   </span>
                 </div>
@@ -261,19 +265,19 @@ export const ChromalabHub: React.FC = () => {
 
         {/* Empty state when searching */}
         {filteredTools.length === 0 && (
-          <div className="text-center py-16 bg-white rounded-2xl border border-zinc-200">
-            <p className="text-sm font-semibold text-zinc-700">Nenhuma ferramenta encontrada</p>
-            <p className="text-xs text-zinc-400 mt-1">Tente pesquisar por outro termo como "Cores" ou "Gradientes".</p>
+          <div className="text-center py-16 bg-white rounded-2xl border border-[#E7E7F0]">
+            <p className="text-sm font-semibold text-[#17172A]">Nenhuma ferramenta encontrada</p>
+            <p className="text-xs text-[#85869A] mt-1">Tente pesquisar por outro termo como "Cores" ou "Gradientes".</p>
           </div>
         )}
 
         {/* Saved Palettes Mini Section if any exist */}
         {savedPalettes.length > 0 && (
-          <div className="mt-12 bg-white rounded-2xl border border-zinc-200/80 p-6">
+          <div className="mt-12 bg-white rounded-2xl border border-[#E7E7F0] p-6 shadow-xs">
             <div className="flex items-center gap-2 mb-4">
-              <Bookmark className="w-4 h-4 text-zinc-500" />
-              <h3 className="text-sm font-bold text-zinc-900">Paletas Guardadas</h3>
-              <span className="text-[10px] bg-zinc-100 text-zinc-500 font-mono px-2 py-0.5 rounded-full">
+              <Bookmark className="w-4 h-4 text-[#7655D9]" />
+              <h3 className="text-sm font-bold text-[#17172A]">Paletas Guardadas</h3>
+              <span className="text-[10px] bg-[#EEF2FF] text-[#7655D9] font-mono px-2 py-0.5 rounded-full border border-[#D6D1F3]">
                 {savedPalettes.length}
               </span>
             </div>
@@ -283,15 +287,15 @@ export const ChromalabHub: React.FC = () => {
                 <div
                   key={pal.id}
                   onClick={() => navigateToTool('palette')}
-                  className="p-3 bg-zinc-50 hover:bg-zinc-100/80 rounded-xl border border-zinc-200/70 transition-all cursor-pointer"
+                  className="p-3 bg-[#F4F5FA] hover:bg-[#F5F2FF] rounded-xl border border-[#E7E7F0] hover:border-[#D6D1F3] transition-all cursor-pointer"
                 >
-                  <div className="h-7 rounded-lg overflow-hidden flex mb-2 border border-zinc-200">
+                  <div className="h-7 rounded-lg overflow-hidden flex mb-2 border border-[#E7E7F0]">
                     {pal.colors.map((c, i) => (
                       <div key={i} className="flex-1 h-full" style={{ backgroundColor: c }} />
                     ))}
                   </div>
-                  <div className="text-xs font-semibold text-zinc-800 truncate">{pal.name}</div>
-                  <div className="text-[10px] text-zinc-400 mt-0.5">
+                  <div className="text-xs font-semibold text-[#17172A] truncate">{pal.name}</div>
+                  <div className="text-[10px] text-[#85869A] mt-0.5">
                     {new Date(pal.createdAt).toLocaleDateString()}
                   </div>
                 </div>
@@ -302,7 +306,7 @@ export const ChromalabHub: React.FC = () => {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-zinc-200/70 py-6 px-6 text-center text-xs text-zinc-400">
+      <footer className="border-t border-[#E7E7F0] py-6 px-6 text-center text-xs text-[#85869A]">
         Chromalab — Suíte Aberta de Ferramentas Visuais de Design. 100% Client-Side.
       </footer>
     </div>

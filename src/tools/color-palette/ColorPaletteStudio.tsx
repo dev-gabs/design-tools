@@ -246,24 +246,24 @@ export const ColorPaletteStudio: React.FC = () => {
   }, [generatePalette]);
 
   return (
-    <div className="flex flex-col w-screen h-screen overflow-hidden bg-zinc-50 text-zinc-900 select-none">
+    <div className="flex flex-col w-screen h-screen overflow-hidden bg-[#FBFBFE] text-[#17172A] select-none">
       {/* Top Chromalab Navigation Bar */}
-      <header className="h-14 bg-white border-b border-zinc-200/80 px-4 md:px-6 flex items-center justify-between gap-3 shrink-0 z-20">
+      <header className="h-14 bg-white border-b border-[#E7E7F0] px-4 md:px-6 flex items-center justify-between gap-3 shrink-0 z-20">
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigateToTool('hub')}
-            className="flex items-center gap-1.5 text-xs font-medium text-zinc-500 hover:text-zinc-900 transition-colors py-1.5 px-2.5 rounded-lg hover:bg-zinc-100 cursor-pointer"
+            className="flex items-center gap-1.5 text-xs font-medium text-[#62647A] hover:text-[#7655D9] transition-colors py-1.5 px-2.5 rounded-lg hover:bg-[#F5F2FF] cursor-pointer"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Chromalab</span>
           </button>
 
-          <div className="h-4 w-[1px] bg-zinc-200" />
+          <div className="h-4 w-[1px] bg-[#E7E7F0]" />
 
           <div>
-            <h1 className="text-sm font-bold tracking-tight text-zinc-900 flex items-center gap-2">
+            <h1 className="text-sm font-bold tracking-tight text-[#17172A] flex items-center gap-2">
               Color Palette Studio
-              <span className="text-[10px] bg-indigo-50 text-indigo-600 font-semibold px-2 py-0.5 rounded-full border border-indigo-100">
+              <span className="text-[10px] bg-[#EEF2FF] text-[#7655D9] font-semibold px-2 py-0.5 rounded-full border border-[#D6D1F3]">
                 Módulo 02
               </span>
             </h1>
@@ -274,19 +274,19 @@ export const ColorPaletteStudio: React.FC = () => {
         <div className="flex items-center gap-2">
           <button
             onClick={() => sendPaletteToMesh(slots.map((s) => s.hex))}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-800 rounded-lg text-xs font-medium transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-[#F4F5FA] hover:bg-[#F5F2FF] text-[#17172A] border border-[#E7E7F0] hover:border-[#D6D1F3] rounded-lg text-xs font-medium transition-colors cursor-pointer"
             title="Enviar paleta para o Mesh Gradient Studio"
           >
-            <Layers className="w-3.5 h-3.5 text-indigo-600" />
+            <Layers className="w-3.5 h-3.5 text-[#7655D9]" />
             <span className="hidden md:inline">Enviar para Mesh Lab</span>
           </button>
 
           <button
             onClick={() => sendPaletteToPattern(slots.map((s) => s.hex))}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-800 rounded-lg text-xs font-medium transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-[#F4F5FA] hover:bg-[#F5F2FF] text-[#17172A] border border-[#E7E7F0] hover:border-[#D6D1F3] rounded-lg text-xs font-medium transition-colors cursor-pointer"
             title="Enviar paleta para o Pattern & Shape Studio"
           >
-            <Grid className="w-3.5 h-3.5 text-pink-600" />
+            <Grid className="w-3.5 h-3.5 text-[#8EA5FF]" />
             <span className="hidden md:inline">Enviar para Patterns</span>
           </button>
 
@@ -294,13 +294,13 @@ export const ColorPaletteStudio: React.FC = () => {
             type="text"
             value={paletteName}
             onChange={(e) => setPaletteName(e.target.value)}
-            className="hidden lg:block bg-zinc-100 border border-zinc-200 rounded-lg px-2.5 py-1 text-xs text-zinc-800 w-32 focus:outline-none focus:border-zinc-400"
+            className="hidden lg:block bg-[#F4F5FA] border border-[#E7E7F0] rounded-lg px-2.5 py-1 text-xs text-[#17172A] w-32 focus:outline-none focus:border-[#7655D9]"
             placeholder="Nome da paleta..."
           />
 
           <button
             onClick={() => savePalette(paletteName, slots.map((s) => s.hex))}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 hover:bg-zinc-800 text-white rounded-lg text-xs font-semibold shadow-sm transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-[#7655D9] hover:bg-[#5B3DB5] text-white rounded-lg text-xs font-semibold shadow-sm shadow-[#7655D9]/20 transition-colors cursor-pointer"
           >
             <BookmarkPlus className="w-3.5 h-3.5" />
             <span>Salvar</span>
@@ -311,9 +311,9 @@ export const ColorPaletteStudio: React.FC = () => {
       {/* Main Workspace */}
       <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
         {/* Controls Panel (Left) */}
-        <aside className="w-full md:w-80 bg-white border-b md:border-b-0 md:border-r border-zinc-200/80 p-5 overflow-y-auto space-y-5 shrink-0">
+        <aside className="w-full md:w-80 bg-white border-b md:border-b-0 md:border-r border-[#E7E7F0] p-5 overflow-y-auto space-y-5 shrink-0">
           <div>
-            <label className="text-xs font-semibold text-zinc-800 block mb-1.5">
+            <label className="text-xs font-semibold text-[#17172A] block mb-1.5">
               Cor de Referência (Base)
             </label>
             <div className="flex items-center gap-2.5">
@@ -321,14 +321,14 @@ export const ColorPaletteStudio: React.FC = () => {
                 type="color"
                 value={baseColor}
                 onChange={(e) => setBaseColor(e.target.value.toUpperCase())}
-                className="w-10 h-10 rounded-xl border border-zinc-200 cursor-pointer bg-transparent p-0.5"
+                className="w-10 h-10 rounded-xl border border-[#E7E7F0] cursor-pointer bg-transparent p-0.5"
               />
-              <div className="flex-1 flex items-center bg-zinc-50 border border-zinc-200 rounded-xl px-2.5 py-2">
+              <div className="flex-1 flex items-center bg-[#F4F5FA] border border-[#E7E7F0] focus-within:border-[#7655D9] rounded-xl px-2.5 py-2">
                 <input
                   type="text"
                   value={baseColor}
                   onChange={(e) => setBaseColor(e.target.value)}
-                  className="w-full bg-transparent text-xs font-mono uppercase text-zinc-900 focus:outline-none"
+                  className="w-full bg-transparent text-xs font-mono uppercase text-[#17172A] focus:outline-none"
                 />
               </div>
             </div>
@@ -338,9 +338,9 @@ export const ColorPaletteStudio: React.FC = () => {
                 id="useBase"
                 checked={useBaseColor}
                 onChange={(e) => setUseBaseColor(e.target.checked)}
-                className="w-3.5 h-3.5 accent-indigo-600 rounded cursor-pointer"
+                className="w-3.5 h-3.5 accent-[#7655D9] rounded cursor-pointer"
               />
-              <label htmlFor="useBase" className="text-xs text-zinc-600 cursor-pointer">
+              <label htmlFor="useBase" className="text-xs text-[#62647A] cursor-pointer">
                 Fixar cor-base como âncora
               </label>
             </div>
@@ -348,13 +348,13 @@ export const ColorPaletteStudio: React.FC = () => {
 
           {/* Harmony Mode */}
           <div>
-            <label className="text-xs font-semibold text-zinc-800 block mb-1.5">
+            <label className="text-xs font-semibold text-[#17172A] block mb-1.5">
               Modo de Harmonia
             </label>
             <select
               value={harmony}
               onChange={(e) => setHarmony(e.target.value as HarmonyMode)}
-              className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs font-medium text-zinc-800 focus:outline-none focus:border-indigo-500 cursor-pointer"
+              className="w-full bg-[#F4F5FA] border border-[#E7E7F0] rounded-xl px-3 py-2 text-xs font-medium text-[#17172A] focus:outline-none focus:border-[#7655D9] cursor-pointer"
             >
               <option value="balanced">Equilibrada / Harmônica</option>
               <option value="analogous">Análoga</option>
@@ -369,7 +369,7 @@ export const ColorPaletteStudio: React.FC = () => {
 
           {/* Personality Mode */}
           <div>
-            <label className="text-xs font-semibold text-zinc-800 block mb-1.5">
+            <label className="text-xs font-semibold text-[#17172A] block mb-1.5">
               Personalidade Cromática
             </label>
             <div className="grid grid-cols-2 gap-1.5">
@@ -384,10 +384,10 @@ export const ColorPaletteStudio: React.FC = () => {
                 <button
                   key={p.id}
                   onClick={() => setPersonality(p.id as PersonalityMode)}
-                  className={`py-1.5 px-2.5 rounded-lg border text-xs text-center transition-all ${
+                  className={`py-1.5 px-2.5 rounded-lg border text-xs text-center transition-all cursor-pointer ${
                     personality === p.id
-                      ? 'bg-zinc-900 border-zinc-900 text-white font-semibold'
-                      : 'bg-zinc-50 border-zinc-200 text-zinc-600 hover:text-zinc-900'
+                      ? 'bg-[#7655D9] border-[#7655D9] text-white font-semibold shadow-xs'
+                      : 'bg-[#F4F5FA] border-[#E7E7F0] text-[#62647A] hover:text-[#17172A] hover:bg-[#F5F2FF]'
                   }`}
                 >
                   {p.label}
@@ -398,9 +398,9 @@ export const ColorPaletteStudio: React.FC = () => {
 
           {/* Number of Colors */}
           <div>
-            <div className="flex justify-between text-xs text-zinc-800 font-semibold mb-1.5">
+            <div className="flex justify-between text-xs text-[#17172A] font-semibold mb-1.5">
               <span>Quantidade de Cores</span>
-              <span className="font-mono text-indigo-600">{colorCount}</span>
+              <span className="font-mono text-[#7655D9]">{colorCount}</span>
             </div>
             <input
               type="range"
@@ -408,34 +408,34 @@ export const ColorPaletteStudio: React.FC = () => {
               max="8"
               value={colorCount}
               onChange={(e) => handleColorCountChange(parseInt(e.target.value, 10))}
-              className="w-full accent-indigo-600 bg-zinc-200 h-1.5 rounded-lg appearance-none cursor-pointer"
+              className="w-full accent-[#7655D9] bg-[#E7E7F0] h-1.5 rounded-lg appearance-none cursor-pointer"
             />
           </div>
 
           {/* Big Generate Button */}
           <button
             onClick={generatePalette}
-            className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold shadow-md shadow-indigo-600/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full py-2.5 bg-[#7655D9] hover:bg-[#5B3DB5] text-white rounded-xl text-xs font-semibold shadow-md shadow-[#7655D9]/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
           >
             <RefreshCw className="w-4 h-4" />
             <span>Gerar Paleta (Espaço)</span>
           </button>
 
           {/* Export & Copy Helpers */}
-          <div className="pt-2 border-t border-zinc-200/80 space-y-2">
-            <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider block">
+          <div className="pt-2 border-t border-[#E7E7F0] space-y-2">
+            <label className="text-[11px] font-semibold text-[#85869A] uppercase tracking-wider block">
               Copiar & Exportar
             </label>
             <div className="grid grid-cols-2 gap-2">
               <button
                 onClick={copyAllHex}
-                className="py-1.5 px-2 bg-zinc-100 hover:bg-zinc-200 text-zinc-800 rounded-lg text-xs font-medium transition-colors text-center"
+                className="py-1.5 px-2 bg-[#F4F5FA] hover:bg-[#F5F2FF] border border-[#E7E7F0] text-[#17172A] rounded-lg text-xs font-medium transition-colors text-center cursor-pointer shadow-xs"
               >
                 {copiedAll ? 'Copiado!' : 'Copiar Todos HEX'}
               </button>
               <button
                 onClick={copyCssVars}
-                className="py-1.5 px-2 bg-zinc-100 hover:bg-zinc-200 text-zinc-800 rounded-lg text-xs font-medium transition-colors text-center"
+                className="py-1.5 px-2 bg-[#F4F5FA] hover:bg-[#F5F2FF] border border-[#E7E7F0] text-[#17172A] rounded-lg text-xs font-medium transition-colors text-center cursor-pointer shadow-xs"
               >
                 Copiar CSS
               </button>
@@ -444,8 +444,9 @@ export const ColorPaletteStudio: React.FC = () => {
         </aside>
 
         {/* Large Swatches Canvas (Center / Right) */}
-        <main className="flex-1 flex flex-col p-4 md:p-8 overflow-y-auto bg-zinc-50 justify-center">
-          <div className="w-full max-w-5xl mx-auto flex-1 flex flex-col justify-center">
+        <main className="flex-1 flex flex-col p-4 md:p-8 overflow-y-auto bg-[#FBFBFE] justify-center relative">
+          <div className="absolute inset-0 pointer-events-none bg-dotted-grid-subtle opacity-60" />
+          <div className="w-full max-w-5xl mx-auto flex-1 flex flex-col justify-center relative z-10">
             {/* Swatches Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-5 lg:grid-flow-col auto-cols-fr gap-3.5 h-[52vh] min-h-[300px]">
               {slots.map((slot) => {
