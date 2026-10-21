@@ -90,33 +90,30 @@ export const TextureLabStudio: React.FC = () => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    canvas.width = resolution;
-    canvas.height = resolution;
+    // Use image's natural size when imported, otherwise use selected resolution (square)
+    const w = importedImage ? importedImage.naturalWidth : resolution;
+    const h = importedImage ? importedImage.naturalHeight : resolution;
+    canvas.width = w;
+    canvas.height = h;
 
     const rng = createRng(seed);
 
-    // Draw background (image or solid color)
+    // Draw background (image at native size or solid color)
     if (importedImage) {
-      // Draw image scaled to fill canvas
-      const ratio = Math.max(resolution / importedImage.width, resolution / importedImage.height);
-      const w = importedImage.width * ratio;
-      const h = importedImage.height * ratio;
-      const ox = (resolution - w) / 2;
-      const oy = (resolution - h) / 2;
-      ctx.drawImage(importedImage, ox, oy, w, h);
+      ctx.drawImage(importedImage, 0, 0, w, h);
     } else if (transparentBg) {
-      ctx.clearRect(0, 0, resolution, resolution);
+      ctx.clearRect(0, 0, w, h);
     } else {
       ctx.fillStyle = bgColor;
-      ctx.fillRect(0, 0, resolution, resolution);
+      ctx.fillRect(0, 0, w, h);
     }
 
     // Create texture layer on a temp canvas then composite with blend mode
     const texCanvas = document.createElement('canvas');
-    texCanvas.width = resolution;
-    texCanvas.height = resolution;
+    texCanvas.width = w;
+    texCanvas.height = h;
     const texCtx = texCanvas.getContext('2d')!;
-    const imgData = texCtx.getImageData(0, 0, resolution, resolution);
+    const imgData = texCtx.getImageData(0, 0, w, h);
     const data = imgData.data;
 
     // Parse grain color RGB
@@ -127,14 +124,14 @@ export const TextureLabStudio: React.FC = () => {
     switch (textureType) {
       case 'film-grain': {
         const step = Math.max(1, Math.round(scale));
-        for (let y = 0; y < resolution; y += step) {
-          for (let x = 0; x < resolution; x += step) {
+        for (let py = 0; py < h; py += step) {
+          for (let px = 0; px < w; px += step) {
             const rawNoise = (rng() + rng() + rng()) / 3 - 0.5;
             const finalVal = Math.max(0, Math.min(1, 0.5 + rawNoise * intensity * contrast));
             const alpha = Math.round(finalVal * opacity * 255);
-            for (let dy = 0; dy < step && y + dy < resolution; dy++) {
-              for (let dx = 0; dx < step && x + dx < resolution; dx++) {
-                const idx = ((y + dy) * resolution + (x + dx)) * 4;
+            for (let dy = 0; dy < step && py + dy < h; dy++) {
+              for (let dx = 0; dx < step && px + dx < w; dx++) {
+                const idx = ((py + dy) * w + (px + dx)) * 4;
                 data[idx] = rMatch; data[idx + 1] = gMatch; data[idx + 2] = bMatch; data[idx + 3] = alpha;
               }
             }
@@ -156,10 +153,10 @@ export const TextureLabStudio: React.FC = () => {
         break;
       }
       case 'subtle-paper': {
-        for (let y = 0; y < resolution; y++) {
-          for (let x = 0; x < resolution; x++) {
-            const idx = (y * resolution + x) * 4;
-            const wave = Math.sin(x * 0.05 * scale) * Math.cos(y * 0.05 * scale);
+        for (let py = 0; py < h; py++) {
+          for (let px = 0; px < w; px++) {
+            const idx = (py * w + px) * 4;
+            const wave = Math.sin(px * 0.05 * scale) * Math.cos(py * 0.05 * scale);
             const fiber = rng() > 0.985 ? 0.35 : 0;
             const noise = (rng() - 0.5) * 0.15 + wave * 0.08 + fiber;
             const a = Math.round(Math.max(0, Math.min(1, 0.5 + noise * intensity)) * opacity * 160);
@@ -173,15 +170,14 @@ export const TextureLabStudio: React.FC = () => {
         const dotSpacing = Math.round(18 * scale);
         texCtx.fillStyle = grainColor;
         texCtx.globalAlpha = opacity;
-        for (let y = 0; y < resolution; y += dotSpacing) {
-          for (let x = 0; x < resolution; x += dotSpacing) {
-            const distFromCenter = Math.hypot(x - resolution / 2, y - resolution / 2) / (resolution * 0.7);
+        for (let py = 0; py < h; py += dotSpacing) {
+          for (let px = 0; px < w; px += dotSpacing) {
+            const distFromCenter = Math.hypot(px - w / 2, py - h / 2) / (Math.max(w, h) * 0.7);
             const dotRadius = Math.max(0.5, (dotSpacing / 2) * intensity * (1 - distFromCenter * 0.4));
-            texCtx.beginPath(); texCtx.arc(x, y, dotRadius, 0, Math.PI * 2); texCtx.fill();
+            texCtx.beginPath(); texCtx.arc(px, py, dotRadius, 0, Math.PI * 2); texCtx.fill();
           }
         }
         texCtx.globalAlpha = 1.0;
-        // Composite tex onto main canvas with blend mode
         ctx.globalCompositeOperation = blendMode as GlobalCompositeOperation;
         ctx.drawImage(texCanvas, 0, 0);
         ctx.globalCompositeOperation = 'source-over';
@@ -190,19 +186,19 @@ export const TextureLabStudio: React.FC = () => {
       case 'stippling': {
         const pointsCount = Math.round(20000 * intensity * (1 / Math.max(0.2, scale)));
         for (let i = 0; i < pointsCount; i++) {
-          const x = Math.floor(rng() * resolution);
-          const y = Math.floor(rng() * resolution);
-          const idx = (y * resolution + x) * 4;
+          const px = Math.floor(rng() * w);
+          const py = Math.floor(rng() * h);
+          const idx = (py * w + px) * 4;
           data[idx] = rMatch; data[idx + 1] = gMatch; data[idx + 2] = bMatch; data[idx + 3] = Math.round(opacity * 255);
         }
         break;
       }
       case 'micro-grid': {
         const gridSize = Math.round(8 * scale);
-        for (let y = 0; y < resolution; y++) {
-          for (let x = 0; x < resolution; x++) {
-            const idx = (y * resolution + x) * 4;
-            const isLine = x % gridSize === 0 || y % gridSize === 0;
+        for (let py = 0; py < h; py++) {
+          for (let px = 0; px < w; px++) {
+            const idx = (py * w + px) * 4;
+            const isLine = px % gridSize === 0 || py % gridSize === 0;
             const a = isLine ? Math.round(intensity * opacity * 255) : 0;
             data[idx] = rMatch; data[idx + 1] = gMatch; data[idx + 2] = bMatch; data[idx + 3] = a;
           }
@@ -227,15 +223,17 @@ export const TextureLabStudio: React.FC = () => {
   const handleExportPng = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+    const cw = canvas.width;
+    const ch = canvas.height;
     canvas.toBlob((blob) => {
       if (!blob) return;
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `texture_${textureType}_${resolution}x${resolution}.png`;
+      a.download = `texture_${textureType}_${cw}x${ch}.png`;
       a.click();
       URL.revokeObjectURL(url);
-      showToast('success', 'Textura Exportada', `Arquivo PNG (${resolution}×${resolution}px) baixado.`);
+      showToast('success', 'Textura Exportada', `Arquivo PNG (${cw}×${ch}px) baixado.`);
     }, 'image/png');
   };
 
@@ -388,27 +386,36 @@ export const TextureLabStudio: React.FC = () => {
             </select>
           </div>
 
-          {/* Resolution */}
-          <div>
-            <label className="text-xs font-semibold text-[#17172A] block mb-1.5">
-              Resolução de Exportação
-            </label>
-            <div className="grid grid-cols-3 gap-1.5">
-              {[512, 1024, 2048].map((res) => (
-                <button
-                  key={res}
-                  onClick={() => setResolution(res)}
-                  className={`py-1.5 px-2 rounded-lg border text-xs text-center font-mono cursor-pointer transition-all ${
-                    resolution === res
-                      ? 'bg-[#7655D9] border-[#7655D9] text-white font-semibold shadow-xs'
-                      : 'bg-[#F4F5FA] border-[#E7E7F0] text-[#62647A] hover:text-[#17172A] hover:bg-[#F5F2FF]'
-                  }`}
-                >
-                  {res}px
-                </button>
-              ))}
+          {/* Resolution — hidden when image is imported (uses image native size) */}
+          {importedImage ? (
+            <div className="flex items-center justify-between p-3 bg-[#EEF2FF] rounded-xl border border-[#D6D1F3]">
+              <span className="text-xs font-semibold text-[#17172A]">Resolução da Imagem</span>
+              <span className="text-xs font-mono text-[#7655D9] font-bold">
+                {importedImage.naturalWidth}×{importedImage.naturalHeight}px
+              </span>
             </div>
-          </div>
+          ) : (
+            <div>
+              <label className="text-xs font-semibold text-[#17172A] block mb-1.5">
+                Resolução de Exportação
+              </label>
+              <div className="grid grid-cols-3 gap-1.5">
+                {[512, 1024, 2048].map((res) => (
+                  <button
+                    key={res}
+                    onClick={() => setResolution(res)}
+                    className={`py-1.5 px-2 rounded-lg border text-xs text-center font-mono cursor-pointer transition-all ${
+                      resolution === res
+                        ? 'bg-[#7655D9] border-[#7655D9] text-white font-semibold shadow-xs'
+                        : 'bg-[#F4F5FA] border-[#E7E7F0] text-[#62647A] hover:text-[#17172A] hover:bg-[#F5F2FF]'
+                    }`}
+                  >
+                    {res}px
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Sliders */}
           <div className="space-y-3 pt-2 border-t border-[#E7E7F0]">
@@ -482,8 +489,14 @@ export const TextureLabStudio: React.FC = () => {
         {/* Live Canvas Viewport */}
         <main className="flex-1 p-6 md:p-10 flex items-center justify-center overflow-auto bg-[#FBFBFE] bg-dotted-grid-subtle relative">
           <div
-            className="relative shadow-xl shadow-purple-900/5 rounded-2xl overflow-hidden border border-[#D6D1F3] bg-white transition-all max-w-full max-h-full"
-            style={{
+            className="relative shadow-xl shadow-purple-900/5 rounded-2xl overflow-hidden border border-[#D6D1F3] bg-white transition-all"
+            style={importedImage ? {
+              // Match image aspect ratio, capped at 720px on longest side
+              width: importedImage.naturalWidth >= importedImage.naturalHeight
+                ? `min(720px, 100%)`
+                : `min(${Math.round(720 * importedImage.naturalWidth / importedImage.naturalHeight)}px, 100%)`,
+              aspectRatio: `${importedImage.naturalWidth} / ${importedImage.naturalHeight}`,
+            } : {
               width: '560px',
               height: '560px',
               backgroundImage: (transparentBg && !importedImage)
