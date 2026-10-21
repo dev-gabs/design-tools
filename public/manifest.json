@@ -1,0 +1,20 @@
+{
+  "name": "Chromalab — Suíte de Ferramentas Visuais",
+  "short_name": "Chromalab",
+  "description": "Suíte aberta de ferramentas visuais para designers e desenvolvedores: Mesh Gradients, Paletas, Padrões, Texturas, Tipografia e Glassmorphism.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#FBFBFE",
+  "theme_color": "#7655D9",
+  "categories": ["design", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "./favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

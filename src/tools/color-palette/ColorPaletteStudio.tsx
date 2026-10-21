@@ -10,6 +10,8 @@ import {
   Layers,
   Grid,
   SlidersHorizontal,
+  Code2,
+  X,
 } from 'lucide-react';
 import { useChromalab } from '../../context/ChromalabContext';
 import {
@@ -225,6 +227,45 @@ export const ColorPaletteStudio: React.FC = () => {
     showToast('success', 'Paleta Copiada', text);
   };
 
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [exportFormat, setExportFormat] = useState<'css' | 'tailwind' | 'figma' | 'scss' | 'array'>('css');
+  const [copiedExport, setCopiedExport] = useState(false);
+
+  const getExportCode = () => {
+    switch (exportFormat) {
+      case 'css': {
+        const lines = slots.map((s, i) => `  --color-${i + 1}: ${s.hex};`).join('\n');
+        return `/* CSS Custom Properties */\n:root {\n${lines}\n}`;
+      }
+      case 'tailwind': {
+        const entries = slots
+          .map((s, i) => `        '${(i + 1) * 100}': '${s.hex}',`)
+          .join('\n');
+        return `// tailwind.config.js\nmodule.exports = {\n  theme: {\n    extend: {\n      colors: {\n        brand: {\n${entries}\n        }\n      }\n    }\n  }\n};`;
+      }
+      case 'figma': {
+        const tokens: Record<string, { value: string; type: string }> = {};
+        slots.forEach((s, i) => {
+          tokens[`color-${i + 1}`] = { value: s.hex, type: 'color' };
+        });
+        return JSON.stringify({ color: tokens }, null, 2);
+      }
+      case 'scss': {
+        return slots.map((s, i) => `$color-${i + 1}: ${s.hex};`).join('\n');
+      }
+      case 'array': {
+        return JSON.stringify(slots.map((s) => s.hex), null, 2);
+      }
+    }
+  };
+
+  const copyExportCode = () => {
+    navigator.clipboard.writeText(getExportCode());
+    setCopiedExport(true);
+    setTimeout(() => setCopiedExport(false), 2000);
+    showToast('success', 'Código Copiado', `Formato ${exportFormat.toUpperCase()} copiado com sucesso.`);
+  };
+
   const copyCssVars = () => {
     const css = slots.map((s, i) => `  --color-${i + 1}: ${s.hex};`).join('\n');
     const full = `:root {\n${css}\n}`;
@@ -288,6 +329,15 @@ export const ColorPaletteStudio: React.FC = () => {
           >
             <Grid className="w-3.5 h-3.5 text-[#8EA5FF]" />
             <span className="hidden md:inline">Enviar para Patterns</span>
+          </button>
+
+          <button
+            onClick={() => setIsExportModalOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-[#F4F5FA] hover:bg-[#F5F2FF] text-[#17172A] border border-[#E7E7F0] hover:border-[#D6D1F3] rounded-lg text-xs font-medium transition-colors cursor-pointer"
+            title="Exportar código da paleta em múltiplos formatos (CSS, Tailwind, Figma)"
+          >
+            <Code2 className="w-3.5 h-3.5 text-[#7655D9]" />
+            <span className="hidden md:inline">Exportar Código</span>
           </button>
 
           <input
@@ -525,6 +575,98 @@ export const ColorPaletteStudio: React.FC = () => {
           </div>
         </main>
       </div>
+
+      {/* Multi-Format Export Modal */}
+      {isExportModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#17172A]/40 backdrop-blur-xs animate-fade-in"
+          onClick={() => setIsExportModalOpen(false)}
+        >
+          <div
+            className="w-full max-w-lg bg-white rounded-2xl border border-[#D6D1F3] shadow-2xl overflow-hidden flex flex-col text-[#17172A]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="p-5 border-b border-[#E7E7F0] flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-bold tracking-tight text-[#17172A] flex items-center gap-2">
+                  <Code2 className="w-4 h-4 text-[#7655D9]" />
+                  Exportar Paleta de Cores
+                </h3>
+                <p className="text-xs text-[#62647A] mt-0.5">
+                  Snippets prontos para Tailwind, CSS, SCSS e Design Tokens.
+                </p>
+              </div>
+              <button
+                onClick={() => setIsExportModalOpen(false)}
+                className="p-1.5 rounded-lg text-[#85869A] hover:text-[#17172A] hover:bg-[#F4F5FA] transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="p-5 space-y-4">
+              {/* Palette Preview Strip */}
+              <div className="h-8 rounded-xl overflow-hidden flex border border-[#E7E7F0] shadow-2xs">
+                {slots.map((s, i) => (
+                  <div key={i} className="flex-1 h-full" style={{ backgroundColor: s.hex }} title={s.hex} />
+                ))}
+              </div>
+
+              {/* Format Switcher */}
+              <div className="grid grid-cols-5 gap-1.5">
+                {[
+                  { id: 'css', label: 'CSS' },
+                  { id: 'tailwind', label: 'Tailwind' },
+                  { id: 'figma', label: 'Tokens' },
+                  { id: 'scss', label: 'SCSS' },
+                  { id: 'array', label: 'Array' },
+                ].map((f) => (
+                  <button
+                    key={f.id}
+                    onClick={() => setExportFormat(f.id as typeof exportFormat)}
+                    className={`py-1.5 rounded-lg border text-xs font-semibold text-center transition-all cursor-pointer ${
+                      exportFormat === f.id
+                        ? 'bg-[#7655D9] border-[#7655D9] text-white shadow-xs'
+                        : 'bg-[#F4F5FA] border-[#E7E7F0] text-[#62647A] hover:text-[#17172A] hover:bg-[#F5F2FF]'
+                    }`}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Code Snippet Box */}
+              <pre className="p-4 bg-[#17172A] text-[#F4F5FA] rounded-xl font-mono text-xs overflow-x-auto leading-relaxed border border-[#E7E7F0] max-h-60 select-all">
+                {getExportCode()}
+              </pre>
+            </div>
+
+            {/* Footer Actions */}
+            <div className="p-4 bg-[#F4F5FA] border-t border-[#E7E7F0] flex items-center justify-between">
+              <span className="text-[11px] text-[#85869A]">
+                {slots.length} cores exportadas
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setIsExportModalOpen(false)}
+                  className="px-3.5 py-1.5 bg-white border border-[#E7E7F0] hover:border-[#D6D1F3] text-[#17172A] rounded-lg text-xs font-medium transition-colors cursor-pointer"
+                >
+                  Fechar
+                </button>
+                <button
+                  onClick={copyExportCode}
+                  className="flex items-center gap-1.5 px-4 py-1.5 bg-[#7655D9] hover:bg-[#5B3DB5] text-white rounded-lg text-xs font-semibold shadow-sm shadow-[#7655D9]/20 transition-all cursor-pointer"
+                >
+                  {copiedExport ? <Check className="w-3.5 h-3.5 text-[#DCD4FF]" /> : <Copy className="w-3.5 h-3.5" />}
+                  <span>{copiedExport ? 'Copiado!' : 'Copiar Código'}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
