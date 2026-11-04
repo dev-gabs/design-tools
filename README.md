@@ -7,7 +7,7 @@
 
 ---
 
-## 🎨 Os 6 Módulos do Chromalab
+## 🎨 Os 7 Módulos do Chromalab
 
 ### 1. Mesh Gradient Studio (Preservado e Integrado)
 - **Motor WebGL Shader:** Interpolação ponderada contínua (*Modified Shepard's Method*) a 60 FPS com precisão matemática.
@@ -44,6 +44,13 @@
 - **Controles:** Intensidade de desfoque (`backdrop-filter`), opacidade de preenchimento, reflexo especular em gradiente, borda, sombra e raio de curvatura.
 - **Componentes de Teste:** Pré-visualização em Cartão (Card), Botão, Painel modal e Badge.
 - **Exportação:** CSS pronto para produção com compatibilidade cross-browser e aviso de contraste de acessibilidade.
+
+### 7. Recolor Studio
+- **Variantes de produto a partir de uma foto:** clique no objeto e gere todas as cores mantendo sombras, brilhos e textura.
+- **Seleção em OKLab:** preenchimento por similaridade de cor que tolera sombras e reflexos, com adição/remoção por clique, tolerância, preenchimento de áreas internas e borda suave.
+- **Recolor perceptual:** preserva a luminosidade relativa, a saturação relativa e as variações de matiz de cada pixel, com ajuste automático ao gamut sRGB.
+- **Integração Direta:** receba a paleta do **Color Palette Studio** como lista de variantes.
+- **Exportação para e-commerce:** PNG na resolução original ou quadrado 1200²/2000² centralizado, fundo transparente opcional e todas as variantes em um único ZIP.
 
 ---
 

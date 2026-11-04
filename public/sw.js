@@ -1,5 +1,6 @@
 // Chromalab Service Worker for offline support & fast caching
-const CACHE_NAME = 'chromalab-cache-v1';
+// Bump CACHE_NAME when the caching strategy changes; hashed build assets never need it.
+const CACHE_NAME = 'chromalab-cache-v2';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -33,39 +34,33 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
+const putInCache = (request, response) => {
+  if (response && response.status === 200 && response.type === 'basic') {
+    const clone = response.clone();
+    caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+  }
+  return response;
+};
+
 self.addEventListener('fetch', (event) => {
   // Only handle GET requests
   if (event.request.method !== 'GET') return;
 
+  // Pages: network first, so a new deploy shows up on the next load; cache only when offline
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => putInCache(event.request, response))
+        .catch(() => caches.match(event.request).then((cached) => cached || caches.match('./index.html')))
+    );
+    return;
+  }
+
+  // Hashed build assets and static files: cache first
   event.respondWith(
     caches.match(event.request).then((cached) => {
-      if (cached) {
-        // Return cached and update cache in background (stale-while-revalidate)
-        fetch(event.request)
-          .then((networkResponse) => {
-            if (networkResponse && networkResponse.status === 200) {
-              const clone = networkResponse.clone();
-              caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-            }
-          })
-          .catch(() => {});
-        return cached;
-      }
-      return fetch(event.request).then((response) => {
-        if (!response || response.status !== 200 || response.type !== 'basic') {
-          return response;
-        }
-        const responseToCache = response.clone();
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseToCache);
-        });
-        return response;
-      });
-    }).catch(() => {
-      // Fallback for navigation requests
-      if (event.request.mode === 'navigate') {
-        return caches.match('./index.html');
-      }
+      if (cached) return cached;
+      return fetch(event.request).then((response) => putInCache(event.request, response));
     })
   );
 });

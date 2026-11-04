@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import type { ToolId, SavedPalette } from '../types/chromalab';
+import { isToolId, type ToolId, type SavedPalette } from '../types/chromalab';
 import { ToastContainer, type ToastMessage } from '../components/Toast';
 
 interface ChromalabContextType {
@@ -18,6 +18,8 @@ interface ChromalabContextType {
   consumePendingMeshPalette: () => string[] | null;
   pendingPatternColors: { primary: string; secondary: string; background: string } | null;
   consumePendingPatternColors: () => { primary: string; secondary: string; background: string } | null;
+  sendPaletteToRecolor: (colors: string[]) => void;
+  consumePendingRecolorColors: () => string[] | null;
   showToast: (type: 'success' | 'error' | 'info', title: string, message?: string) => void;
   isInstallable: boolean;
   promptInstall: () => void;
@@ -33,11 +35,7 @@ export const ChromalabProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   // Sync tool from URL hash if available (e.g. #/mesh or #/palette)
   const [currentTool, setCurrentTool] = useState<ToolId | 'hub'>(() => {
     const hash = window.location.hash.replace('#/', '').replace('#', '');
-    const validTools: ToolId[] = ['mesh', 'palette', 'pattern', 'texture', 'type', 'glass'];
-    if (validTools.includes(hash as ToolId)) {
-      return hash as ToolId;
-    }
-    return 'hub';
+    return isToolId(hash) ? hash : 'hub';
   });
 
   const [activePalette, setActivePaletteState] = useState<string[]>(() => {
@@ -65,6 +63,8 @@ export const ChromalabProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     background: string;
   } | null>(null);
 
+  const [pendingRecolorColors, setPendingRecolorColors] = useState<string[] | null>(null);
+
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
   // Update hash when tool changes
@@ -77,12 +77,7 @@ export const ChromalabProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.replace('#/', '').replace('#', '');
-      const validTools: ToolId[] = ['mesh', 'palette', 'pattern', 'texture', 'type', 'glass'];
-      if (validTools.includes(hash as ToolId)) {
-        setCurrentTool(hash as ToolId);
-      } else {
-        setCurrentTool('hub');
-      }
+      setCurrentTool(isToolId(hash) ? hash : 'hub');
     };
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
@@ -178,6 +173,20 @@ export const ChromalabProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     showToast('success', 'Paleta Enviada ao Pattern Studio', 'Cores aplicadas ao padrão.');
   }, [navigateToTool, setActivePalette, showToast]);
 
+  const sendPaletteToRecolor = useCallback((colors: string[]) => {
+    setPendingRecolorColors([...colors]);
+    setActivePalette(colors);
+    navigateToTool('recolor');
+    showToast('success', 'Paleta Enviada ao Recolor Studio', `${colors.length} variantes de cor criadas.`);
+  }, [navigateToTool, setActivePalette, showToast]);
+
+  const consumePendingRecolorColors = useCallback(() => {
+    if (!pendingRecolorColors) return null;
+    const colors = [...pendingRecolorColors];
+    setPendingRecolorColors(null);
+    return colors;
+  }, [pendingRecolorColors]);
+
   const consumePendingMeshPalette = useCallback(() => {
     if (!pendingMeshPalette) return null;
     const colors = [...pendingMeshPalette];
@@ -244,6 +253,8 @@ export const ChromalabProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         consumePendingMeshPalette,
         pendingPatternColors,
         consumePendingPatternColors,
+        sendPaletteToRecolor,
+        consumePendingRecolorColors,
         showToast,
         isInstallable,
         promptInstall,

@@ -14,6 +14,7 @@ import {
   ExternalLink,
   Code2,
   Download,
+  Pipette,
 } from 'lucide-react';
 import { useChromalab } from '../context/ChromalabContext';
 
@@ -116,6 +117,15 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       icon: <Square className="w-4 h-4 text-[#7655D9]" />,
       badge: 'Módulo 06',
       action: () => navigateToTool('glass'),
+    },
+    {
+      id: 'nav-recolor',
+      title: 'Recolor Studio',
+      subtitle: 'Variantes de cor de produto a partir de uma foto, preservando sombras',
+      category: 'Navegação',
+      icon: <Pipette className="w-4 h-4 text-[#7655D9]" />,
+      badge: 'Módulo 07',
+      action: () => navigateToTool('recolor'),
     },
     {
       id: 'action-fullscreen',

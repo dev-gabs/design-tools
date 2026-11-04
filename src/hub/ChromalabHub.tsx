@@ -58,6 +58,14 @@ export const TOOLS: ToolMetadata[] = [
     description: 'Ajuste desfoque de fundo, reflexos especulares e gere CSS limpo com backdrop-filter.',
     category: 'Interface',
   },
+  {
+    id: 'recolor',
+    name: 'Recolor Studio',
+    tagline: 'Variantes de cor de produto a partir de uma única foto, com sombras e brilhos preservados.',
+    description: 'Selecione o objeto com um clique, escolha as cores e exporte todas as variantes para e-commerce.',
+    category: 'Produto',
+    badge: 'Novo',
+  },
 ];
 
 interface ChromalabHubProps {
@@ -274,6 +282,21 @@ export const ChromalabHub: React.FC<ChromalabHubProps> = ({
                       <div className="w-5 h-5 rounded-md bg-white/30" />
                       <div className="w-16 h-2 rounded bg-white/40" />
                     </div>
+                  </div>
+                )}
+
+                {/* 7. Recolor Studio Preview */}
+                {tool.id === 'recolor' && (
+                  <div className="w-full h-full bg-white flex items-center justify-center gap-3 transition-transform duration-500 group-hover:scale-105">
+                    {['#3B5BDB', '#E03131', '#2F9E44', '#F08C00'].map((c) => (
+                      <div
+                        key={c}
+                        className="w-12 h-12 rounded-full shadow-md"
+                        style={{
+                          background: `radial-gradient(circle at 32% 28%, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0) 22%), radial-gradient(circle at 50% 50%, ${c} 45%, #111 140%)`,
+                        }}
+                      />
+                    ))}
                   </div>
                 )}
 
