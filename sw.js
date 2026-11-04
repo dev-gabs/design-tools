@@ -42,6 +42,16 @@ const putInCache = (request, response) => {
   return response;
 };
 
+// GitHub Pages cannot send custom headers, so the worker adds the ones that enable cross-origin
+// isolation, which lets the AI selection run multi-threaded. Only same-origin responses change.
+const withIsolation = (response) => {
+  if (!response || response.type !== 'basic') return response;
+  const headers = new Headers(response.headers);
+  headers.set('Cross-Origin-Opener-Policy', 'same-origin');
+  headers.set('Cross-Origin-Embedder-Policy', 'credentialless');
+  return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
+};
+
 self.addEventListener('fetch', (event) => {
   // Only handle GET requests
   if (event.request.method !== 'GET') return;
@@ -52,6 +62,7 @@ self.addEventListener('fetch', (event) => {
       fetch(event.request)
         .then((response) => putInCache(event.request, response))
         .catch(() => caches.match(event.request).then((cached) => cached || caches.match('./index.html')))
+        .then(withIsolation)
     );
     return;
   }
@@ -61,6 +72,6 @@ self.addEventListener('fetch', (event) => {
     caches.match(event.request).then((cached) => {
       if (cached) return cached;
       return fetch(event.request).then((response) => putInCache(event.request, response));
-    })
+    }).then(withIsolation)
   );
 });
