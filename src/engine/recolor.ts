@@ -1,9 +1,15 @@
-// Product recolor engine: region selection + OKLab recoloring that preserves shading.
+// Product recolor engine: region selection, edge matting and OKLab recoloring that preserves shading.
 //
-// The selection is a color-distance flood fill in OKLab, where lightness counts less than
-// chroma/hue so shadows and highlights of the same surface stay inside the region.
-// Recoloring keeps each pixel's lightness offset, relative chroma and hue offset from the
-// region's average color, and moves that average to the target color.
+// Selection is a color-distance flood fill in OKLab, where lightness counts less than chroma/hue
+// so shadows and highlights of the same surface stay inside the region.
+//
+// Edges are matted: in a thin band around the selection each pixel is treated as a mix of the
+// object color and the local background, so only the object's share is recolored and no fringe
+// of the old color is left behind.
+//
+// Recoloring models a material change: shading scales lightness multiplicatively (as reflected
+// light does when the albedo changes), strong highlights keep their brightness, and the original
+// hue variation is compressed so it does not turn into visible bands in the new color.
 
 export interface LabImage {
   width: number;
@@ -16,14 +22,24 @@ export interface SelectionSeed {
   x: number; // normalized 0..1
   y: number; // normalized 0..1
   mode: 'add' | 'subtract';
+  tolerance?: number; // per-click tolerance; falls back to SelectionOptions.tolerance
 }
 
 export interface SelectionOptions {
-  tolerance: number; // OKLab distance, ~0.02..0.4
+  tolerance: number; // OKLab distance, ~0.02..0.4, for seeds without their own
   contiguous: boolean;
   fillHoles: boolean;
   closeRadius: number; // px at working resolution, fills small holes
-  feather: number; // px at working resolution, softens edges
+  edge: number; // px at working resolution, width of the matted edge band
+}
+
+// Object coverage per pixel plus the estimated background color behind edge pixels
+export interface Matte {
+  width: number;
+  height: number;
+  alpha: Float32Array; // 0..1
+  background: Float32Array; // sRGB 0..255, 3 per pixel
+  foreground: Float32Array; // sRGB 0..255, 3 per pixel: local object color near edges
 }
 
 export interface RegionStats {
@@ -36,7 +52,10 @@ export interface RegionStats {
 
 export interface RecolorOptions {
   targetHex: string;
-  lightness: number; // 0 keeps original lightness, 1 moves it fully to the target
+  lightness: number; // 0 keeps original lightness, 1 follows the target's lightness fully
+  highlights: number; // 0..1 how much bright highlights keep their original brightness
+  hueVariation: number; // 0..1 share of the original hue variation kept
+  contrast: number; // 1 keeps the original light/shadow spread; above 1 reads glossier
   intensity: number; // 0..1 blend with the original
 }
 
@@ -66,6 +85,12 @@ function linearToSrgb8(x: number): number {
   return LINEAR_TO_SRGB[Math.round(x * LINEAR_LUT_SIZE)];
 }
 
+// Same conversion for fractional 0..255 input (matted edge colors are not integers)
+function srgbToLinear(v: number): number {
+  const c = Math.max(0, Math.min(1, v / 255));
+  return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+}
+
 function linearToOklab(r: number, g: number, b: number, out: Float32Array | number[], o: number) {
   const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b);
   const m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b);
@@ -86,23 +111,6 @@ function oklabToLinear(L: number, a: number, b: number, out: number[]) {
 
 const inGamut = (c: number[]) =>
   c[0] >= -1e-4 && c[0] <= 1.0001 && c[1] >= -1e-4 && c[1] <= 1.0001 && c[2] >= -1e-4 && c[2] <= 1.0001;
-
-// Converts OKLCh to linear sRGB, reducing chroma until the color fits the sRGB gamut.
-function oklchToLinearInGamut(L: number, C: number, h: number, out: number[]) {
-  const cosH = Math.cos(h);
-  const sinH = Math.sin(h);
-  oklabToLinear(L, C * cosH, C * sinH, out);
-  if (inGamut(out)) return;
-  let lo = 0;
-  let hi = C;
-  for (let i = 0; i < 10; i++) {
-    const mid = (lo + hi) / 2;
-    oklabToLinear(L, mid * cosH, mid * sinH, out);
-    if (inGamut(out)) lo = mid;
-    else hi = mid;
-  }
-  oklabToLinear(L, lo * cosH, lo * sinH, out);
-}
 
 // Largest in-gamut chroma for each lightness step at a fixed hue, so the per-pixel loop can
 // clamp chroma with a table lookup instead of a binary search.
@@ -141,7 +149,7 @@ export function hexToOklch(hex: string): { L: number; C: number; h: number } {
 
 function oklabToHex(L: number, a: number, b: number): string {
   const lin = [0, 0, 0];
-  oklchToLinearInGamut(L, Math.hypot(a, b), Math.atan2(b, a), lin);
+  oklabToLinear(L, a, b, lin);
   return `#${lin.map((v) => linearToSrgb8(v).toString(16).padStart(2, '0')).join('').toUpperCase()}`;
 }
 
@@ -224,6 +232,54 @@ function regionFromSeed(img: LabImage, seed: SelectionSeed, tolerance: number, c
   return region;
 }
 
+// Picks a tolerance for a click by growing it until the region suddenly leaks into the
+// surroundings, then settling in the middle of the stable range before the leak. Run it on a
+// small copy of the image: it does one flood fill per step.
+//
+// With an existing selection (`selected`, at the same resolution as `img`) the click is a
+// touch-up, so it measures how much the whole selection grows and stops right before it jumps.
+export function suggestTolerance(img: LabImage, seed: SelectionSeed, selected?: Float32Array): number | null {
+  const steps: number[] = [];
+  for (let t = 0.02; t <= 0.3001; t += 0.01) steps.push(Number(t.toFixed(2)));
+  const coverage = steps.map((t) => {
+    const region = regionFromSeed(img, seed, t, true);
+    let n = 0;
+    for (let i = 0; i < region.length; i++) n += (region[i] || (selected && selected[i] > 0.5)) ? 1 : 0;
+    return n / region.length;
+  });
+
+  if (selected) {
+    for (let k = 0; k < steps.length - 1; k++) {
+      const gain = coverage[k + 1] - coverage[k];
+      if (gain > 0.02 && gain > coverage[k] * 0.15) return steps[k];
+    }
+    return steps[steps.length - 1];
+  }
+
+  // Coverage first grows while the fill spreads over the object, then flattens once the whole
+  // object is in, then jumps when it leaks. Only a jump after a flat stretch counts as a leak.
+  let stableStart = -1;
+  let biggestJump = -1;
+  let biggestGain = 0;
+  for (let k = 0; k < steps.length - 1; k++) {
+    const c = coverage[k];
+    if (c <= 0) continue;
+    const gain = coverage[k + 1] - c;
+    const growth = gain / c;
+    if (gain > biggestGain && coverage[k + 1] > c * 1.8) {
+      biggestGain = gain;
+      biggestJump = k;
+    }
+    if (stableStart < 0) {
+      if (growth < 0.1) stableStart = k;
+    } else if (growth > 0.3 && gain > 0.02) {
+      return Number(((steps[stableStart] + steps[k]) / 2).toFixed(3));
+    }
+  }
+  // Unevenly lit objects may never flatten out: stop right before the biggest leak instead
+  return biggestJump >= 0 ? steps[biggestJump] : null;
+}
+
 // Sum of `src` over a (2r+1)² box around every pixel, via an integral image.
 function boxSum(src: Float32Array, w: number, h: number, r: number): Float32Array {
   const integral = new Float64Array((w + 1) * (h + 1));
@@ -252,34 +308,21 @@ function boxArea(w: number, h: number, x: number, y: number, r: number) {
   return (Math.min(w, x + r + 1) - Math.max(0, x - r)) * (Math.min(h, y + r + 1) - Math.max(0, y - r));
 }
 
-// Morphological close (dilate then erode) fills specular holes and thin gaps in the region.
-function closeMask(mask: Float32Array, w: number, h: number, r: number): Float32Array {
-  if (r <= 0) return mask;
-  const dilatedSum = boxSum(mask, w, h, r);
-  const dilated = new Float32Array(w * h);
-  for (let i = 0; i < w * h; i++) dilated[i] = dilatedSum[i] > 0.5 ? 1 : 0;
-  const erodedSum = boxSum(dilated, w, h, r);
-  const closed = new Float32Array(w * h);
+function dilate(mask: Float32Array, w: number, h: number, r: number): Float32Array {
+  const sum = boxSum(mask, w, h, r);
+  const out = new Float32Array(w * h);
+  for (let i = 0; i < w * h; i++) out[i] = sum[i] > 0.5 ? 1 : 0;
+  return out;
+}
+
+function erode(mask: Float32Array, w: number, h: number, r: number): Float32Array {
+  const sum = boxSum(mask, w, h, r);
+  const out = new Float32Array(w * h);
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
       const i = y * w + x;
-      closed[i] = erodedSum[i] >= boxArea(w, h, x, y, r) - 0.5 ? 1 : 0;
+      out[i] = sum[i] >= boxArea(w, h, x, y, r) - 0.5 ? 1 : 0;
     }
-  }
-  return closed;
-}
-
-function featherMask(mask: Float32Array, w: number, h: number, r: number): Float32Array {
-  if (r <= 0) return mask;
-  let out = mask;
-  // Two box passes approximate a gaussian falloff
-  for (let pass = 0; pass < 2; pass++) {
-    const sum = boxSum(out, w, h, r);
-    const next = new Float32Array(w * h);
-    for (let y = 0; y < h; y++) {
-      for (let x = 0; x < w; x++) next[y * w + x] = sum[y * w + x] / boxArea(w, h, x, y, r);
-    }
-    out = next;
   }
   return out;
 }
@@ -310,41 +353,98 @@ function fillHoles(mask: Float32Array, w: number, h: number): Float32Array {
   return filled;
 }
 
-// Returns a soft mask (0..1 per pixel) at the working image resolution.
-export function buildMask(img: LabImage, seeds: SelectionSeed[], options: SelectionOptions): Float32Array {
-  const size = img.width * img.height;
-  let mask: Float32Array = new Float32Array(size);
-  for (const seed of seeds) {
-    const region = regionFromSeed(img, seed, options.tolerance, options.contiguous);
-    const value = seed.mode === 'add' ? 1 : 0;
-    for (let i = 0; i < size; i++) if (region[i]) mask[i] = value;
+// Estimates object coverage in a band around the selection edge. Each band pixel is projected
+// onto the line between the local object color F and the local background color B (both
+// averaged from pixels that are certainly inside / outside), giving alpha = |p - B| / |F - B|.
+function matteEdges(img: LabImage, hard: Float32Array, r: number): Matte {
+  const { width: w, height: h, rgba } = img;
+  const size = w * h;
+  const alpha = new Float32Array(size);
+  const background = new Float32Array(size * 3);
+  for (let i = 0; i < size; i++) {
+    alpha[i] = hard[i];
+    background[i * 3] = rgba[i * 4];
+    background[i * 3 + 1] = rgba[i * 4 + 1];
+    background[i * 3 + 2] = rgba[i * 4 + 2];
   }
-  if (options.fillHoles) mask = fillHoles(mask, img.width, img.height);
-  mask = closeMask(mask, img.width, img.height, Math.round(options.closeRadius));
-  return featherMask(mask, img.width, img.height, Math.round(options.feather));
+  const foreground = new Float32Array(background);
+  if (r <= 0) return { width: w, height: h, alpha, background, foreground };
+
+  const inner = erode(hard, w, h, r);
+  const outer = dilate(hard, w, h, r);
+  const definiteBg = new Float32Array(size);
+  for (let i = 0; i < size; i++) definiteBg[i] = 1 - outer[i];
+
+  // Local color means of the certain object / background pixels around each band pixel
+  const R = 2 * r + 2;
+  const channel = (weights: Float32Array, c: number) => {
+    const values = new Float32Array(size);
+    for (let i = 0; i < size; i++) values[i] = rgba[i * 4 + c] * weights[i];
+    return boxSum(values, w, h, R);
+  };
+  const countF = boxSum(inner, w, h, R);
+  const countB = boxSum(definiteBg, w, h, R);
+  const sumF = [channel(inner, 0), channel(inner, 1), channel(inner, 2)];
+  const sumB = [channel(definiteBg, 0), channel(definiteBg, 1), channel(definiteBg, 2)];
+
+  for (let i = 0; i < size; i++) {
+    if (inner[i]) { alpha[i] = 1; continue; }
+    if (!outer[i]) { alpha[i] = 0; continue; }
+    if (countF[i] < 1 || countB[i] < 1) continue; // image border or tiny region: keep the hard edge
+
+    const p = [rgba[i * 4], rgba[i * 4 + 1], rgba[i * 4 + 2]];
+    const F = [sumF[0][i] / countF[i], sumF[1][i] / countF[i], sumF[2][i] / countF[i]];
+    const B = [sumB[0][i] / countB[i], sumB[1][i] / countB[i], sumB[2][i] / countB[i]];
+    const d = [F[0] - B[0], F[1] - B[1], F[2] - B[2]];
+    const dd = d[0] * d[0] + d[1] * d[1] + d[2] * d[2];
+    background[i * 3] = B[0];
+    background[i * 3 + 1] = B[1];
+    background[i * 3 + 2] = B[2];
+    foreground[i * 3] = F[0];
+    foreground[i * 3 + 1] = F[1];
+    foreground[i * 3 + 2] = F[2];
+    // Object and background too similar to separate: keep the hard edge
+    if (dd < 300) continue;
+    const t = ((p[0] - B[0]) * d[0] + (p[1] - B[1]) * d[1] + (p[2] - B[2]) * d[2]) / dd;
+    alpha[i] = Math.max(0, Math.min(1, t));
+  }
+  return { width: w, height: h, alpha, background, foreground };
 }
 
-export function regionStats(img: LabImage, mask: Float32Array): RegionStats | null {
+export function buildMatte(img: LabImage, seeds: SelectionSeed[], options: SelectionOptions): Matte {
+  const size = img.width * img.height;
+  let hard: Float32Array = new Float32Array(size);
+  for (const seed of seeds) {
+    const region = regionFromSeed(img, seed, seed.tolerance ?? options.tolerance, options.contiguous);
+    const value = seed.mode === 'add' ? 1 : 0;
+    for (let i = 0; i < size; i++) if (region[i]) hard[i] = value;
+  }
+  if (options.fillHoles) hard = fillHoles(hard, img.width, img.height);
+  const close = Math.round(options.closeRadius);
+  if (close > 0) hard = erode(dilate(hard, img.width, img.height, close), img.width, img.height, close);
+  return matteEdges(img, hard, Math.round(options.edge));
+}
+
+export function regionStats(img: LabImage, matte: Matte): RegionStats | null {
   let L = 0, a = 0, b = 0, C = 0, weight = 0;
-  for (let i = 0; i < mask.length; i++) {
-    const m = mask[i];
-    if (m <= 0.5) continue;
+  for (let i = 0; i < matte.alpha.length; i++) {
+    if (matte.alpha[i] < 0.99) continue;
     const p = i * 3;
-    L += img.lab[p] * m;
-    a += img.lab[p + 1] * m;
-    b += img.lab[p + 2] * m;
-    C += Math.hypot(img.lab[p + 1], img.lab[p + 2]) * m;
-    weight += m;
+    L += img.lab[p];
+    a += img.lab[p + 1];
+    b += img.lab[p + 2];
+    C += Math.hypot(img.lab[p + 1], img.lab[p + 2]);
+    weight++;
   }
   if (weight === 0) return null;
   L /= weight; a /= weight; b /= weight; C /= weight;
-  return { L, C, h: Math.atan2(b, a), hex: oklabToHex(L, a, b), coverage: weight / mask.length };
+  return { L, C, h: Math.atan2(b, a), hex: oklabToHex(L, a, b), coverage: weight / matte.alpha.length };
 }
 
 // ─── Recolor ───────────────────────────────────────────────────────────────────
 
-// Bilinear lookup so a mask built at preview resolution can drive a full-resolution export.
-function sampleMask(mask: Float32Array, mw: number, mh: number, u: number, v: number): number {
+// Bilinear lookup so a matte built at preview resolution can drive a full-resolution export.
+function sampleBilinear(values: Float32Array, mw: number, mh: number, u: number, v: number): number {
   const x = Math.max(0, Math.min(mw - 1, u * mw - 0.5));
   const y = Math.max(0, Math.min(mh - 1, v * mh - 0.5));
   const x0 = Math.floor(x);
@@ -353,58 +453,113 @@ function sampleMask(mask: Float32Array, mw: number, mh: number, u: number, v: nu
   const y1 = Math.min(mh - 1, y0 + 1);
   const fx = x - x0;
   const fy = y - y0;
-  const top = mask[y0 * mw + x0] * (1 - fx) + mask[y0 * mw + x1] * fx;
-  const bottom = mask[y1 * mw + x0] * (1 - fx) + mask[y1 * mw + x1] * fx;
+  const top = values[y0 * mw + x0] * (1 - fx) + values[y0 * mw + x1] * fx;
+  const bottom = values[y1 * mw + x0] * (1 - fx) + values[y1 * mw + x1] * fx;
   return top * (1 - fy) + bottom * fy;
 }
+
+const wrapAngle = (a: number) => Math.atan2(Math.sin(a), Math.cos(a));
 
 export interface RecolorInput {
   rgba: Uint8ClampedArray;
   width: number;
   height: number;
-  mask: Float32Array;
-  maskWidth: number;
-  maskHeight: number;
+  matte: Matte;
   stats: RegionStats;
   transparentBackground?: boolean;
 }
 
 export function recolorPixels(input: RecolorInput, options: RecolorOptions): Uint8ClampedArray<ArrayBuffer> {
-  const { rgba, width: w, height: h, mask, maskWidth: mw, maskHeight: mh, stats } = input;
+  const { rgba, width: w, height: h, matte, stats } = input;
+  const { width: mw, height: mh } = matte;
   const out = new Uint8ClampedArray(rgba);
   const target = hexToOklch(options.targetHex);
-  const dL = (target.L - stats.L) * options.lightness;
-  const dh = target.h - stats.h;
-  // A grey source has no reliable chroma to scale from, so it gets the target chroma directly
+  const Lr = Math.max(0.02, stats.L);
+  const Lt = target.L;
+  const darkening = Lt <= Lr;
+  // A grey source has no reliable chroma or hue to scale from
   const greySource = stats.C < 0.03;
   const sameSize = mw === w && mh === h;
   const CHROMA_STEPS = 256;
   const maxChroma = maxChromaTable(target.h, CHROMA_STEPS);
   const lab = [0, 0, 0];
   const lin = [0, 0, 0];
+  const src = [0, 0, 0];
+  const bg = [0, 0, 0];
 
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
       const i = y * w + x;
-      const m = sameSize ? mask[i] : sampleMask(mask, mw, mh, (x + 0.5) / w, (y + 0.5) / h);
       const o = i * 4;
-      if (input.transparentBackground) out[o + 3] = Math.round(rgba[o + 3] * Math.min(1, m));
-      const k = m * options.intensity;
-      if (k <= 0.002) continue;
+      let mi = i;
+      let a: number;
+      if (sameSize) {
+        a = matte.alpha[i];
+      } else {
+        const u = (x + 0.5) / w;
+        const v = (y + 0.5) / h;
+        a = sampleBilinear(matte.alpha, mw, mh, u, v);
+        mi = Math.min(mh - 1, Math.floor(v * mh)) * mw + Math.min(mw - 1, Math.floor(u * mw));
+      }
+      if (input.transparentBackground) out[o + 3] = Math.round(rgba[o + 3] * a);
+      if (a <= 0.002) continue;
 
-      linearToOklab(SRGB_TO_LINEAR[rgba[o]], SRGB_TO_LINEAR[rgba[o + 1]], SRGB_TO_LINEAR[rgba[o + 2]], lab, 0);
+      // Edge pixels: separate the object's share from the background behind it
+      if (a >= 0.998) {
+        src[0] = rgba[o]; src[1] = rgba[o + 1]; src[2] = rgba[o + 2];
+      } else {
+        bg[0] = matte.background[mi * 3];
+        bg[1] = matte.background[mi * 3 + 1];
+        bg[2] = matte.background[mi * 3 + 2];
+        // Unmixing divides by alpha, which amplifies noise on mostly-background pixels, so those
+        // lean on the local object color instead
+        const trust = Math.max(0, Math.min(1, (a - 0.15) / 0.6));
+        for (let c = 0; c < 3; c++) {
+          const unmixed = Math.max(0, Math.min(255, (rgba[o + c] - (1 - a) * bg[c]) / a));
+          src[c] = matte.foreground[mi * 3 + c] + (unmixed - matte.foreground[mi * 3 + c]) * trust;
+        }
+      }
+
+      linearToOklab(srgbToLinear(src[0]), srgbToLinear(src[1]), srgbToLinear(src[2]), lab, 0);
+      const L = lab[0];
       const C = Math.hypot(lab[1], lab[2]);
-      const newL = Math.max(0, Math.min(1, lab[0] + dL));
-      const wantedC = greySource ? target.C : target.C * Math.min(1.6, C / stats.C);
+      const shade = L / Lr;
+
+      // Lightness: multiply when darkening, mirror (screen-like) when lightening
+      let mapped: number;
+      let highlight = 0;
+      if (darkening) {
+        mapped = L * (Lt / Lr);
+        const hl = Math.max(0, Math.min(1, (L - Lr) / Math.max(0.05, 1 - Lr)));
+        highlight = hl * hl * options.highlights;
+        mapped += (L - mapped) * highlight;
+      } else {
+        mapped = 1 - (1 - L) * ((1 - Lt) / Math.max(0.02, 1 - Lr));
+      }
+      let newL = L + (mapped - L) * options.lightness;
+      // Contrast spreads lightness around the region's new average, which reads as more sheen
+      // (both mappings send the region's average Lr exactly to Lt)
+      const center = Lr + (Lt - Lr) * options.lightness;
+      newL = Math.max(0, Math.min(1, center + (newL - center) * options.contrast));
+
+      // Chroma follows the shading; the source's own chroma ratio adds texture when it is reliable
+      const chromaRatio = greySource ? shade : 0.5 * (C / stats.C) + 0.5 * shade;
+      const wantedC = target.C * Math.min(1.4, chromaRatio) * (1 - highlight);
       const newC = Math.min(wantedC, maxChroma[Math.round(newL * CHROMA_STEPS)]);
-      const newH = greySource ? target.h : Math.atan2(lab[2], lab[1]) + dh;
-      // Pixel hues sit close to the target hue, so the table clamp is near-exact; channel
-      // clamping in linearToSrgb8 absorbs what is left
+      const newH = greySource
+        ? target.h
+        : target.h + wrapAngle(Math.atan2(lab[2], lab[1]) - stats.h) * options.hueVariation;
       oklabToLinear(newL, newC * Math.cos(newH), newC * Math.sin(newH), lin);
 
-      out[o] = rgba[o] + (linearToSrgb8(lin[0]) - rgba[o]) * k;
-      out[o + 1] = rgba[o + 1] + (linearToSrgb8(lin[1]) - rgba[o + 1]) * k;
-      out[o + 2] = rgba[o + 2] + (linearToSrgb8(lin[2]) - rgba[o + 2]) * k;
+      for (let c = 0; c < 3; c++) {
+        const recolored = linearToSrgb8(lin[c]);
+        // Transparent export keeps only the object, so edges get the pure recolored color
+        const composed = input.transparentBackground || a >= 0.998
+          ? recolored
+          : a * recolored + (1 - a) * bg[c];
+        const base = input.transparentBackground ? src[c] : rgba[o + c];
+        out[o + c] = base + (composed - base) * options.intensity;
+      }
     }
   }
   return out;

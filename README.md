@@ -47,8 +47,8 @@
 
 ### 7. Recolor Studio
 - **Variantes de produto a partir de uma foto:** clique no objeto e gere todas as cores mantendo sombras, brilhos e textura.
-- **Seleção em OKLab:** preenchimento por similaridade de cor que tolera sombras e reflexos, com adição/remoção por clique, tolerância, preenchimento de áreas internas e borda suave.
-- **Recolor perceptual:** preserva a luminosidade relativa, a saturação relativa e as variações de matiz de cada pixel, com ajuste automático ao gamut sRGB.
+- **Seleção em OKLab:** preenchimento por similaridade de cor que tolera sombras e reflexos, com tolerância automática por clique (para antes de vazar para o fundo), adição/remoção, preenchimento de áreas internas e recorte de borda que separa objeto e fundo sem halo.
+- **Recolor como troca de material:** a sombra escala a luminosidade de forma multiplicativa, reflexos fortes mantêm o brilho, a variação de tom original é atenuada e o contraste pode ser ampliado para um acabamento mais acetinado, com ajuste automático ao gamut sRGB.
 - **Integração Direta:** receba a paleta do **Color Palette Studio** como lista de variantes.
 - **Exportação para e-commerce:** PNG na resolução original ou quadrado 1200²/2000² centralizado, fundo transparente opcional e todas as variantes em um único ZIP.
 

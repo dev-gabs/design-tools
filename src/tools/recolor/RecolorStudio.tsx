@@ -16,11 +16,13 @@ import {
 import { useChromalab } from '../../context/ChromalabContext';
 import {
   imageToLab,
-  buildMask,
+  buildMatte,
   regionStats,
+  suggestTolerance,
   recolorPixels,
   type SelectionSeed,
   type SelectionOptions,
+  type RecolorOptions,
 } from '../../engine/recolor';
 import { createZip } from '../../engine/zip';
 
@@ -36,6 +38,8 @@ type ExportSize = 'original' | '1200' | '2000';
 // Working resolution for selection and live preview; exports run at the image's native size
 const PREVIEW_MAX = 1200;
 const THUMB_MAX = 200;
+// Auto tolerance needs enough detail to keep thin parts (rims, arms) connected
+const ANALYSIS_MAX = 400;
 
 const DEFAULT_VARIANTS: Variant[] = [
   { id: 'v-red', name: 'Vermelho', hex: '#D62839' },
@@ -91,15 +95,19 @@ export const RecolorStudio: React.FC = () => {
 
   const [seeds, setSeeds] = useState<SelectionSeed[]>([]);
   const [clickMode, setClickMode] = useState<'add' | 'subtract'>('add');
-  const [tolerance, setTolerance] = useState(0.12);
+  const [tolerance, setTolerance] = useState(0.06);
+  const [autoTolerance, setAutoTolerance] = useState(true);
   const [contiguous, setContiguous] = useState(true);
   const [fillHoles, setFillHoles] = useState(true);
   const [closeRadius, setCloseRadius] = useState(2);
-  const [feather, setFeather] = useState(1);
+  const [edge, setEdge] = useState(2);
 
   const [variants, setVariants] = useState<Variant[]>(DEFAULT_VARIANTS);
   const [activeId, setActiveId] = useState(DEFAULT_VARIANTS[0].id);
-  const [lightness, setLightness] = useState(0.8);
+  const [lightness, setLightness] = useState(1);
+  const [contrast, setContrast] = useState(1);
+  const [highlights, setHighlights] = useState(0.5);
+  const [hueVariation, setHueVariation] = useState(0.3);
   const [intensity, setIntensity] = useState(1);
 
   const [view, setView] = useState<ViewMode>('result');
@@ -132,20 +140,31 @@ export const RecolorStudio: React.FC = () => {
     return imageToLab(image, width, height);
   }, [image]);
 
+  const analysisSource = useMemo(() => {
+    if (!image) return null;
+    const { width, height } = fitSize(image.naturalWidth, image.naturalHeight, ANALYSIS_MAX);
+    return imageToLab(image, width, height);
+  }, [image]);
+
   const selectionOptions = useMemo<SelectionOptions>(
-    () => ({ tolerance, contiguous, fillHoles, closeRadius, feather }),
-    [tolerance, contiguous, fillHoles, closeRadius, feather],
+    () => ({ tolerance, contiguous, fillHoles, closeRadius, edge }),
+    [tolerance, contiguous, fillHoles, closeRadius, edge],
   );
   const deferredOptions = useDeferredValue(selectionOptions);
-  const previewLightness = useDeferredValue(lightness);
-  const previewIntensity = useDeferredValue(intensity);
 
-  const mask = useMemo(() => {
+  // Everything but the target color, shared by preview, thumbnails and export
+  const toneOptions = useMemo<Omit<RecolorOptions, 'targetHex'>>(
+    () => ({ lightness, contrast, highlights, hueVariation, intensity }),
+    [lightness, contrast, highlights, hueVariation, intensity],
+  );
+  const previewTone = useDeferredValue(toneOptions);
+
+  const matte = useMemo(() => {
     if (!working || seeds.length === 0) return null;
-    return buildMask(working, seeds, deferredOptions);
+    return buildMatte(working, seeds, deferredOptions);
   }, [working, seeds, deferredOptions]);
 
-  const stats = useMemo(() => (working && mask ? regionStats(working, mask) : null), [working, mask]);
+  const stats = useMemo(() => (working && matte ? regionStats(working, matte) : null), [working, matte]);
 
   const activeVariant = variants.find((v) => v.id === activeId) ?? variants[0];
 
@@ -159,7 +178,7 @@ export const RecolorStudio: React.FC = () => {
     if (!ctx) return;
     const { width, height, rgba } = working;
 
-    if (!mask || !stats || view === 'original' || !activeVariant) {
+    if (!matte || !stats || view === 'original' || !activeVariant) {
       ctx.putImageData(new ImageData(new Uint8ClampedArray(rgba), width, height), 0, 0);
       return;
     }
@@ -167,9 +186,9 @@ export const RecolorStudio: React.FC = () => {
     if (view === 'mask') {
       // Tint the selected area with the Chromalab purple (#7655D9)
       const out = new Uint8ClampedArray(rgba);
-      for (let i = 0; i < mask.length; i++) {
+      for (let i = 0; i < matte.alpha.length; i++) {
         const o = i * 4;
-        const k = mask[i] * 0.65;
+        const k = matte.alpha[i] * 0.65;
         out[o] = out[o] * (1 - k) + 118 * k;
         out[o + 1] = out[o + 1] * (1 - k) + 85 * k;
         out[o + 2] = out[o + 2] * (1 - k) + 217 * k;
@@ -179,16 +198,16 @@ export const RecolorStudio: React.FC = () => {
     }
 
     const pixels = recolorPixels(
-      { rgba, width, height, mask, maskWidth: width, maskHeight: height, stats, transparentBackground: transparentBg },
-      { targetHex: activeVariant.hex, lightness: previewLightness, intensity: previewIntensity },
+      { rgba, width, height, matte, stats, transparentBackground: transparentBg },
+      { targetHex: activeVariant.hex, ...previewTone },
     );
     ctx.putImageData(new ImageData(pixels, width, height), 0, 0);
-  }, [working, mask, stats, view, activeVariant, previewLightness, previewIntensity, transparentBg]);
+  }, [working, matte, stats, view, activeVariant, previewTone, transparentBg]);
 
   // Small previews of every variant for the sidebar
   const thumbnails = useMemo(() => {
     const result: Record<string, string> = {};
-    if (!thumbSource || !working || !mask || !stats) return result;
+    if (!thumbSource || !matte || !stats) return result;
     const canvas = document.createElement('canvas');
     canvas.width = thumbSource.width;
     canvas.height = thumbSource.height;
@@ -200,18 +219,16 @@ export const RecolorStudio: React.FC = () => {
           rgba: thumbSource.rgba,
           width: thumbSource.width,
           height: thumbSource.height,
-          mask,
-          maskWidth: working.width,
-          maskHeight: working.height,
+          matte,
           stats,
         },
-        { targetHex: variant.hex, lightness: previewLightness, intensity: previewIntensity },
+        { targetHex: variant.hex, ...previewTone },
       );
       ctx.putImageData(new ImageData(pixels, thumbSource.width, thumbSource.height), 0, 0);
       result[variant.id] = canvas.toDataURL('image/png');
     }
     return result;
-  }, [thumbSource, working, mask, stats, variants, previewLightness, previewIntensity]);
+  }, [thumbSource, matte, stats, variants, previewTone]);
 
   const loadImageFile = (file: File) => {
     if (!file.type.startsWith('image/')) {
@@ -238,7 +255,17 @@ export const RecolorStudio: React.FC = () => {
     const x = (e.clientX - rect.left) / rect.width;
     const y = (e.clientY - rect.top) / rect.height;
     const mode = e.altKey ? 'subtract' : e.shiftKey ? 'add' : clickMode;
-    setSeeds((prev) => [...prev, { x, y, mode }]);
+    // Each click keeps its own tolerance, so tuning one area never makes another leak
+    let seedTolerance = tolerance;
+    if (autoTolerance && mode === 'add' && analysisSource) {
+      // Touch-up clicks are measured against what is already selected, so they stop before leaking
+      const selected = seeds.length > 0
+        ? buildMatte(analysisSource, seeds, { ...selectionOptions, edge: 0 }).alpha
+        : undefined;
+      seedTolerance = suggestTolerance(analysisSource, { x, y, mode }, selected) ?? tolerance;
+    }
+    setTolerance(seedTolerance);
+    setSeeds((prev) => [...prev, { x, y, mode, tolerance: seedTolerance }]);
     if (view === 'original') setView('result');
   };
 
@@ -271,7 +298,7 @@ export const RecolorStudio: React.FC = () => {
 
   // Renders a variant at the image's native resolution, then fits it to the chosen export size
   const renderVariant = (source: Uint8ClampedArray, variant: Variant): Promise<Blob> => {
-    if (!image || !working || !mask || !stats) return Promise.reject(new Error('Nada selecionado'));
+    if (!image || !matte || !stats) return Promise.reject(new Error('Nada selecionado'));
     const w = image.naturalWidth;
     const h = image.naturalHeight;
     const pixels = recolorPixels(
@@ -279,13 +306,11 @@ export const RecolorStudio: React.FC = () => {
         rgba: source,
         width: w,
         height: h,
-        mask,
-        maskWidth: working.width,
-        maskHeight: working.height,
+        matte,
         stats,
         transparentBackground: transparentBg,
       },
-      { targetHex: variant.hex, lightness, intensity },
+      { targetHex: variant.hex, ...toneOptions },
     );
     let out = document.createElement('canvas');
     out.width = w;
@@ -370,13 +395,21 @@ export const RecolorStudio: React.FC = () => {
     }`;
 
   const sliders = [
-    { label: 'Tolerância de cor', val: tolerance, set: setTolerance, min: 0.02, max: 0.4, step: 0.01, fmt: (v: number) => `${Math.round(v * 100)}` },
+    // Dragging the slider means the user wants to control it, so auto mode steps aside
+    { label: seeds.length > 0 ? 'Tolerância do último clique' : 'Tolerância de cor', val: tolerance, set: (v: number) => {
+      setTolerance(v);
+      setAutoTolerance(false);
+      setSeeds((prev) => prev.map((seed, i) => (i === prev.length - 1 ? { ...seed, tolerance: v } : seed)));
+    }, min: 0.02, max: 0.4, step: 0.01, fmt: (v: number) => `${Math.round(v * 100)}` },
     { label: 'Preencher buracos', val: closeRadius, set: setCloseRadius, min: 0, max: 8, step: 1, fmt: (v: number) => `${v}px` },
-    { label: 'Suavizar borda', val: feather, set: setFeather, min: 0, max: 6, step: 1, fmt: (v: number) => `${v}px` },
+    { label: 'Recorte da borda', val: edge, set: setEdge, min: 0, max: 6, step: 1, fmt: (v: number) => `${v}px` },
   ];
 
   const colorSliders = [
     { label: 'Luminosidade da cor alvo', val: lightness, set: setLightness, min: 0, max: 1, step: 0.05, fmt: (v: number) => `${Math.round(v * 100)}%` },
+    { label: 'Contraste (brilho acetinado)', val: contrast, set: setContrast, min: 0.5, max: 2.5, step: 0.05, fmt: (v: number) => `${v.toFixed(2)}x` },
+    { label: 'Preservar reflexos', val: highlights, set: setHighlights, min: 0, max: 1, step: 0.05, fmt: (v: number) => `${Math.round(v * 100)}%` },
+    { label: 'Variação de tom original', val: hueVariation, set: setHueVariation, min: 0, max: 1, step: 0.05, fmt: (v: number) => `${Math.round(v * 100)}%` },
     { label: 'Intensidade', val: intensity, set: setIntensity, min: 0, max: 1, step: 0.05, fmt: (v: number) => `${Math.round(v * 100)}%` },
   ];
 
@@ -483,7 +516,11 @@ export const RecolorStudio: React.FC = () => {
               <span className="text-xs font-semibold text-[#17172A]">Seleção do Objeto</span>
               <div className="flex gap-1">
                 <button
-                  onClick={() => setSeeds((prev) => prev.slice(0, -1))}
+                  onClick={() => {
+                    const next = seeds.slice(0, -1);
+                    setSeeds(next);
+                    if (next.length > 0) setTolerance(next[next.length - 1].tolerance ?? tolerance);
+                  }}
                   disabled={seeds.length === 0}
                   title="Desfazer último clique"
                   className="p-1.5 rounded-lg text-[#62647A] hover:bg-[#F5F2FF] hover:text-[#7655D9] disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed"
@@ -505,6 +542,13 @@ export const RecolorStudio: React.FC = () => {
               Atalhos: Shift+clique adiciona, Alt+clique remove.
             </p>
             {sliders.map(renderSlider)}
+            <label className="flex items-center justify-between text-xs text-[#62647A] cursor-pointer">
+              <span>Tolerância automática a cada clique</span>
+              <input
+                type="checkbox" checked={autoTolerance} onChange={(e) => setAutoTolerance(e.target.checked)}
+                className="w-4 h-4 accent-[#7655D9] rounded cursor-pointer"
+              />
+            </label>
             <label className="flex items-center justify-between text-xs text-[#62647A] cursor-pointer">
               <span>Incluir áreas internas (brilhos, furos)</span>
               <input
