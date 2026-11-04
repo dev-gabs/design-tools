@@ -25,6 +25,13 @@ export interface SelectionSeed {
   tolerance?: number; // per-click tolerance; falls back to SelectionOptions.tolerance
 }
 
+// A freehand brush stroke; it overrides whatever the clicks or the AI selected under it
+export interface BrushStroke {
+  mode: 'add' | 'subtract';
+  radius: number; // fraction of the image width
+  points: { x: number; y: number }[]; // normalized 0..1
+}
+
 export interface SelectionOptions {
   tolerance: number; // OKLab distance, ~0.02..0.4, for seeds without their own
   contiguous: boolean;
@@ -411,7 +418,12 @@ function matteEdges(img: LabImage, hard: Float32Array, r: number): Matte {
   return { width: w, height: h, alpha, background, foreground };
 }
 
-export function buildMatte(img: LabImage, seeds: SelectionSeed[], options: SelectionOptions): Matte {
+export function buildMatte(
+  img: LabImage,
+  seeds: SelectionSeed[],
+  options: SelectionOptions,
+  strokes: BrushStroke[] = [],
+): Matte {
   const size = img.width * img.height;
   let hard: Float32Array = new Float32Array(size);
   for (const seed of seeds) {
@@ -419,22 +431,60 @@ export function buildMatte(img: LabImage, seeds: SelectionSeed[], options: Selec
     const value = seed.mode === 'add' ? 1 : 0;
     for (let i = 0; i < size; i++) if (region[i]) hard[i] = value;
   }
-  return finishMatte(img, hard, options);
+  return finishMatte(img, hard, options, strokes);
 }
 
 // Same clean-up and edge matting for a mask that came from elsewhere (the AI segmenter),
 // given at the working image resolution as 0/1 values.
-export function matteFromMask(img: LabImage, mask: Uint8Array, options: SelectionOptions): Matte {
+// `mask` may be null when only brush strokes define the selection.
+export function matteFromMask(
+  img: LabImage,
+  mask: Uint8Array | null,
+  options: SelectionOptions,
+  strokes: BrushStroke[] = [],
+): Matte {
   const hard = new Float32Array(img.width * img.height);
-  for (let i = 0; i < hard.length; i++) hard[i] = mask[i] ? 1 : 0;
-  return finishMatte(img, hard, options);
+  if (mask) for (let i = 0; i < hard.length; i++) hard[i] = mask[i] ? 1 : 0;
+  return finishMatte(img, hard, options, strokes);
 }
 
-function finishMatte(img: LabImage, mask: Float32Array, options: SelectionOptions): Matte {
+// Stamps each stroke as a chain of discs. Runs after hole filling so a "remove" stroke inside the
+// object is not filled back in, and before edge matting so brushed edges get refined too.
+function paintStrokes(hard: Float32Array, w: number, h: number, strokes: BrushStroke[]) {
+  for (const stroke of strokes) {
+    const r = Math.max(1, stroke.radius * w);
+    const r2 = r * r;
+    const value = stroke.mode === 'add' ? 1 : 0;
+    const stamp = (cx: number, cy: number) => {
+      const y0 = Math.max(0, Math.floor(cy - r));
+      const y1 = Math.min(h - 1, Math.ceil(cy + r));
+      const x0 = Math.max(0, Math.floor(cx - r));
+      const x1 = Math.min(w - 1, Math.ceil(cx + r));
+      for (let y = y0; y <= y1; y++) {
+        const dy = y + 0.5 - cy;
+        for (let x = x0; x <= x1; x++) {
+          const dx = x + 0.5 - cx;
+          if (dx * dx + dy * dy <= r2) hard[y * w + x] = value;
+        }
+      }
+    };
+    const pts = stroke.points.map((p) => ({ x: p.x * w, y: p.y * h }));
+    stamp(pts[0].x, pts[0].y);
+    for (let k = 1; k < pts.length; k++) {
+      const a = pts[k - 1];
+      const b = pts[k];
+      const steps = Math.max(1, Math.ceil(Math.hypot(b.x - a.x, b.y - a.y) / Math.max(1, r * 0.4)));
+      for (let s = 1; s <= steps; s++) stamp(a.x + ((b.x - a.x) * s) / steps, a.y + ((b.y - a.y) * s) / steps);
+    }
+  }
+}
+
+function finishMatte(img: LabImage, mask: Float32Array, options: SelectionOptions, strokes: BrushStroke[]): Matte {
   let hard = mask;
   if (options.fillHoles) hard = fillHoles(hard, img.width, img.height);
   const close = Math.round(options.closeRadius);
   if (close > 0) hard = erode(dilate(hard, img.width, img.height, close), img.width, img.height, close);
+  if (strokes.length > 0) paintStrokes(hard, img.width, img.height, strokes);
   return matteEdges(img, hard, Math.round(options.edge));
 }
 

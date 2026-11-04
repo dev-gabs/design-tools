@@ -13,6 +13,7 @@ import {
   Archive,
   AlertTriangle,
   Sparkles,
+  Brush,
 } from 'lucide-react';
 import { useChromalab } from '../../context/ChromalabContext';
 import {
@@ -24,6 +25,7 @@ import {
   recolorPixels,
   type LabImage,
   type SelectionSeed,
+  type BrushStroke,
   type SelectionOptions,
   type RecolorOptions,
 } from '../../engine/recolor';
@@ -38,6 +40,7 @@ interface Variant {
 
 type ViewMode = 'result' | 'original' | 'mask';
 type AiStatus = 'off' | 'loading' | 'ready' | 'error';
+type SelectTool = 'click' | 'brush';
 type ExportSize = 'original' | '1200' | '2000';
 
 // Working resolution for selection and live preview; exports run at the image's native size
@@ -99,6 +102,14 @@ export const RecolorStudio: React.FC = () => {
   const [isDraggingOver, setIsDraggingOver] = useState(false);
 
   const [seeds, setSeeds] = useState<SelectionSeed[]>([]);
+  // Brush strokes refine the selection by hand; history keeps clicks and strokes in order for undo
+  const [tool, setTool] = useState<SelectTool>('click');
+  const [brushSize, setBrushSize] = useState(24); // radius in px of the working image
+  const [strokes, setStrokes] = useState<BrushStroke[]>([]);
+  const [history, setHistory] = useState<('seed' | 'stroke')[]>([]);
+  const strokeRef = useRef<BrushStroke | null>(null);
+  const overlayRef = useRef<HTMLCanvasElement>(null);
+  const brushCursorRef = useRef<HTMLDivElement>(null);
   const [clickMode, setClickMode] = useState<'add' | 'subtract'>('add');
   const [tolerance, setTolerance] = useState(0.06);
   const [autoTolerance, setAutoTolerance] = useState(true);
@@ -227,16 +238,143 @@ export const RecolorStudio: React.FC = () => {
   const chosenCandidate = aiChoice ?? bestCandidate;
 
   const matte = useMemo(() => {
-    if (!working || seeds.length === 0) return null;
+    if (!working || (seeds.length === 0 && strokes.length === 0)) return null;
     if (aiActive) {
-      if (!aiMasks || chosenCandidate === null) return null;
-      return matteFromMask(working, aiMasks.masks[chosenCandidate], deferredOptions);
+      if (seeds.length > 0 && (!aiMasks || chosenCandidate === null)) return null;
+      const mask = seeds.length > 0 && aiMasks && chosenCandidate !== null ? aiMasks.masks[chosenCandidate] : null;
+      return matteFromMask(working, mask, deferredOptions, strokes);
     }
-    return buildMatte(working, seeds, deferredOptions);
-  }, [working, seeds, deferredOptions, aiActive, aiMasks, chosenCandidate]);
+    return buildMatte(working, seeds, deferredOptions, strokes);
+  }, [working, seeds, strokes, deferredOptions, aiActive, aiMasks, chosenCandidate]);
+
+  const resetSelection = () => {
+    setSeeds([]);
+    setStrokes([]);
+    setHistory([]);
+  };
+
+  const undoLast = () => {
+    const last = history[history.length - 1];
+    if (!last) return;
+    setHistory(history.slice(0, -1));
+    if (last === 'stroke') {
+      setStrokes(strokes.slice(0, -1));
+      return;
+    }
+    const next = seeds.slice(0, -1);
+    setSeeds(next);
+    if (next.length > 0) setTolerance(next[next.length - 1].tolerance ?? tolerance);
+  };
+
+  // The brush shows the selection itself, so it switches to the selection view
+  const selectTool = (next: SelectTool) => {
+    setTool(next);
+    if (next === 'brush' && view === 'result') setView('mask');
+    if (next === 'click' && view === 'mask') setView('result');
+  };
+
+  useEffect(() => {
+    if (tool !== 'brush') return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.key === '[') setBrushSize((size) => Math.max(2, Math.round(size / 1.25)));
+      if (e.key === ']') setBrushSize((size) => Math.min(120, Math.round(size * 1.25)));
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [tool]);
+
+  // The stroke being drawn lives on an overlay until the selection catches up with it
+  useEffect(() => {
+    const overlay = overlayRef.current;
+    if (overlay && !strokeRef.current) overlay.getContext('2d')?.clearRect(0, 0, overlay.width, overlay.height);
+  }, [matte]);
+
+  const drawStrokePreview = () => {
+    const overlay = overlayRef.current;
+    const stroke = strokeRef.current;
+    if (!overlay || !working || !stroke) return;
+    overlay.width = working.width;
+    overlay.height = working.height;
+    const ctx = overlay.getContext('2d');
+    if (!ctx) return;
+    const color = stroke.mode === 'add' ? 'rgba(118, 85, 217, 0.55)' : 'rgba(239, 68, 68, 0.55)';
+    const r = stroke.radius * working.width;
+    ctx.fillStyle = color;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = r * 2;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    if (stroke.points.length === 1) {
+      ctx.arc(stroke.points[0].x * working.width, stroke.points[0].y * working.height, r, 0, Math.PI * 2);
+      ctx.fill();
+      return;
+    }
+    stroke.points.forEach((pt, i) => {
+      const px = pt.x * working.width;
+      const py = pt.y * working.height;
+      if (i === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    });
+    ctx.stroke();
+  };
+
+  const moveBrushCursor = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    const cursor = brushCursorRef.current;
+    if (!cursor || !working) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const d = (brushSize * 2 * rect.width) / working.width;
+    // Updated directly on the element: re-rendering the studio on every mouse move would be wasteful
+    cursor.style.display = 'block';
+    cursor.style.width = `${d}px`;
+    cursor.style.height = `${d}px`;
+    cursor.style.left = `${e.clientX - rect.left - d / 2}px`;
+    cursor.style.top = `${e.clientY - rect.top - d / 2}px`;
+  };
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (tool !== 'brush' || !working || e.button !== 0) return;
+    // Keeps the stroke going when the pointer leaves the canvas mid-drag
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {
+      // pointer already released: the stroke still works, it just ends at the canvas edge
+    }
+    const rect = e.currentTarget.getBoundingClientRect();
+    const opposite = clickMode === 'add' ? 'subtract' : 'add';
+    strokeRef.current = {
+      mode: e.altKey ? opposite : clickMode,
+      radius: brushSize / working.width,
+      points: [{ x: (e.clientX - rect.left) / rect.width, y: (e.clientY - rect.top) / rect.height }],
+    };
+    drawStrokePreview();
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (tool !== 'brush' || !working) return;
+    moveBrushCursor(e);
+    const stroke = strokeRef.current;
+    if (!stroke) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width;
+    const y = (e.clientY - rect.top) / rect.height;
+    const last = stroke.points[stroke.points.length - 1];
+    if (Math.hypot((x - last.x) * working.width, (y - last.y) * working.height) < Math.max(1, brushSize * 0.25)) return;
+    stroke.points.push({ x, y });
+    drawStrokePreview();
+  };
+
+  const finishStroke = () => {
+    const stroke = strokeRef.current;
+    if (!stroke) return;
+    strokeRef.current = null;
+    setStrokes((prev) => [...prev, stroke]);
+    setHistory((prev) => [...prev, 'stroke']);
+  };
 
   const enableAi = async () => {
-    setSeeds([]);
+    resetSelection();
     if (samRef.current) {
       setAiStatus('ready');
       return;
@@ -259,7 +397,7 @@ export const RecolorStudio: React.FC = () => {
 
   const disableAi = () => {
     setAiStatus('off');
-    setSeeds([]);
+    resetSelection();
   };
 
   const stats = useMemo(() => (working && matte ? regionStats(working, matte) : null), [working, matte]);
@@ -339,7 +477,7 @@ export const RecolorStudio: React.FC = () => {
       img.onload = () => {
         setImage(img);
         setFileName(file.name);
-        setSeeds([]);
+        resetSelection();
         setView('result');
         showToast('info', 'Imagem carregada', 'Clique no produto para selecioná-lo.');
       };
@@ -356,6 +494,7 @@ export const RecolorStudio: React.FC = () => {
     if (aiActive) {
       setAiChoice(null);
       setSeeds((prev) => [...prev, { x, y, mode }]);
+      setHistory((prev) => [...prev, 'seed']);
       if (view === 'original') setView('result');
       return;
     }
@@ -370,6 +509,7 @@ export const RecolorStudio: React.FC = () => {
     }
     setTolerance(seedTolerance);
     setSeeds((prev) => [...prev, { x, y, mode, tolerance: seedTolerance }]);
+    setHistory((prev) => [...prev, 'seed']);
     if (view === 'original') setView('result');
   };
 
@@ -593,7 +733,7 @@ export const RecolorStudio: React.FC = () => {
                   className="text-[10px] font-semibold text-[#7655D9] hover:underline cursor-pointer shrink-0"
                 >Trocar</button>
                 <button
-                  onClick={() => { setImage(null); setFileName(''); setSeeds([]); }}
+                  onClick={() => { setImage(null); setFileName(''); resetSelection(); }}
                   className="p-1 text-[#85869A] hover:text-red-500 rounded cursor-pointer shrink-0"
                 ><X className="w-3.5 h-3.5" /></button>
               </div>
@@ -620,27 +760,40 @@ export const RecolorStudio: React.FC = () => {
               <span className="text-xs font-semibold text-[#17172A]">Seleção do Objeto</span>
               <div className="flex gap-1">
                 <button
-                  onClick={() => {
-                    const next = seeds.slice(0, -1);
-                    setSeeds(next);
-                    if (next.length > 0) setTolerance(next[next.length - 1].tolerance ?? tolerance);
-                  }}
-                  disabled={seeds.length === 0}
-                  title="Desfazer último clique"
+                  onClick={undoLast}
+                  disabled={history.length === 0}
+                  title="Desfazer último clique ou pincelada"
                   className="p-1.5 rounded-lg text-[#62647A] hover:bg-[#F5F2FF] hover:text-[#7655D9] disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed"
                 ><Undo2 className="w-3.5 h-3.5" /></button>
                 <button
-                  onClick={() => setSeeds([])}
-                  disabled={seeds.length === 0}
+                  onClick={resetSelection}
+                  disabled={history.length === 0}
                   title="Limpar seleção"
                   className="p-1.5 rounded-lg text-[#62647A] hover:bg-[#F5F2FF] hover:text-red-500 disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed"
                 ><Eraser className="w-3.5 h-3.5" /></button>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-1.5">
+              <button onClick={() => selectTool('click')} className={`${segmentedButton(tool === 'click')} flex items-center justify-center gap-1`}>
+                <MousePointerClick className="w-3 h-3" /> Clique
+              </button>
+              <button onClick={() => selectTool('brush')} className={`${segmentedButton(tool === 'brush')} flex items-center justify-center gap-1`}>
+                <Brush className="w-3 h-3" /> Pincel
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-1.5">
               <button onClick={() => setClickMode('add')} className={segmentedButton(clickMode === 'add')}>+ Adicionar</button>
               <button onClick={() => setClickMode('subtract')} className={segmentedButton(clickMode === 'subtract')}>− Remover</button>
             </div>
+            {tool === 'brush' && (
+              <>
+                {renderSlider({ label: 'Tamanho do pincel', val: brushSize, set: setBrushSize, min: 2, max: 120, step: 1, fmt: (v: number) => `${v}px` })}
+                <p className="text-[10px] text-[#85869A] leading-relaxed">
+                  Pinte sobre a imagem para somar ou tirar áreas da seleção; o pincel vale por cima dos cliques e da IA.
+                  Alt inverte o modo, [ e ] mudam o tamanho.
+                </p>
+              </>
+            )}
             {/* AI selection */}
             <div className="p-2.5 rounded-xl border border-[#D6D1F3] bg-[#F5F2FF] space-y-2">
               {aiStatus === 'off' || aiStatus === 'error' ? (
@@ -882,10 +1035,23 @@ export const RecolorStudio: React.FC = () => {
               >
                 <canvas
                   ref={canvasRef}
-                  onClick={handleCanvasClick}
-                  className="w-full h-full block cursor-crosshair"
+                  onClick={tool === 'click' ? handleCanvasClick : undefined}
+                  onPointerDown={handlePointerDown}
+                  onPointerMove={handlePointerMove}
+                  onPointerUp={finishStroke}
+                  onPointerCancel={finishStroke}
+                  onPointerLeave={() => { if (brushCursorRef.current) brushCursorRef.current.style.display = 'none'; }}
+                  className={`w-full h-full block ${tool === 'brush' ? 'cursor-none touch-none' : 'cursor-crosshair'}`}
                 />
-                {seeds.length === 0 && (
+                <canvas ref={overlayRef} className="absolute inset-0 w-full h-full pointer-events-none" />
+                {tool === 'brush' && (
+                  <div
+                    ref={brushCursorRef}
+                    className="absolute rounded-full border-2 border-white pointer-events-none hidden"
+                    style={{ boxShadow: '0 0 0 1px rgba(23, 23, 42, 0.6)' }}
+                  />
+                )}
+                {tool === 'click' && history.length === 0 && (
                   <div className="absolute inset-x-0 bottom-4 flex justify-center pointer-events-none">
                     <div className="flex items-center gap-2 bg-[#17172A]/85 text-white text-xs font-medium px-3.5 py-2 rounded-full backdrop-blur-sm">
                       <MousePointerClick className="w-3.5 h-3.5" /> Clique no produto para selecioná-lo
