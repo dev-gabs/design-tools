@@ -419,6 +419,19 @@ export function buildMatte(img: LabImage, seeds: SelectionSeed[], options: Selec
     const value = seed.mode === 'add' ? 1 : 0;
     for (let i = 0; i < size; i++) if (region[i]) hard[i] = value;
   }
+  return finishMatte(img, hard, options);
+}
+
+// Same clean-up and edge matting for a mask that came from elsewhere (the AI segmenter),
+// given at the working image resolution as 0/1 values.
+export function matteFromMask(img: LabImage, mask: Uint8Array, options: SelectionOptions): Matte {
+  const hard = new Float32Array(img.width * img.height);
+  for (let i = 0; i < hard.length; i++) hard[i] = mask[i] ? 1 : 0;
+  return finishMatte(img, hard, options);
+}
+
+function finishMatte(img: LabImage, mask: Float32Array, options: SelectionOptions): Matte {
+  let hard = mask;
   if (options.fillHoles) hard = fillHoles(hard, img.width, img.height);
   const close = Math.round(options.closeRadius);
   if (close > 0) hard = erode(dilate(hard, img.width, img.height, close), img.width, img.height, close);

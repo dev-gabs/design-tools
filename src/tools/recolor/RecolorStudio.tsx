@@ -12,19 +12,23 @@ import {
   Palette,
   Archive,
   AlertTriangle,
+  Sparkles,
 } from 'lucide-react';
 import { useChromalab } from '../../context/ChromalabContext';
 import {
   imageToLab,
   buildMatte,
+  matteFromMask,
   regionStats,
   suggestTolerance,
   recolorPixels,
+  type LabImage,
   type SelectionSeed,
   type SelectionOptions,
   type RecolorOptions,
 } from '../../engine/recolor';
 import { createZip } from '../../engine/zip';
+import { SamClient, type SamMasks } from '../../engine/sam';
 
 interface Variant {
   id: string;
@@ -33,6 +37,7 @@ interface Variant {
 }
 
 type ViewMode = 'result' | 'original' | 'mask';
+type AiStatus = 'off' | 'loading' | 'ready' | 'error';
 type ExportSize = 'original' | '1200' | '2000';
 
 // Working resolution for selection and live preview; exports run at the image's native size
@@ -115,6 +120,15 @@ export const RecolorStudio: React.FC = () => {
   const [transparentBg, setTransparentBg] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
 
+  // AI selection (SlimSAM): the model loads on demand, analyzes each image once, then answers clicks
+  const [aiStatus, setAiStatus] = useState<AiStatus>('off');
+  const [aiProgress, setAiProgress] = useState(0);
+  const [aiDevice, setAiDevice] = useState<'webgpu' | 'wasm' | null>(null);
+  const [embedded, setEmbedded] = useState<LabImage | null>(null);
+  const [aiResult, setAiResult] = useState<SamMasks | null>(null);
+  const [aiChoice, setAiChoice] = useState<number | null>(null); // null = the model's best guess
+  const samRef = useRef<SamClient | null>(null);
+
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imageFileRef = useRef<HTMLInputElement>(null);
 
@@ -159,10 +173,94 @@ export const RecolorStudio: React.FC = () => {
   );
   const previewTone = useDeferredValue(toneOptions);
 
+  const aiActive = aiStatus === 'loading' || aiStatus === 'ready';
+  const aiReady = aiStatus === 'ready' && !!working && embedded === working;
+  const aiAnalyzing = aiStatus === 'ready' && !!working && embedded !== working;
+
+  useEffect(() => () => samRef.current?.dispose(), []);
+
+  // Encode each new image once; clicks then only run the fast decoder
+  useEffect(() => {
+    const client = samRef.current;
+    if (!client || aiStatus !== 'ready' || !working || embedded === working) return;
+    let cancelled = false;
+    client
+      .embed(working.rgba, working.width, working.height)
+      .then((device) => {
+        if (cancelled) return;
+        setAiDevice(device);
+        setEmbedded(working);
+      })
+      .catch((err) => { if (!cancelled) showToast('error', 'Erro ao analisar a imagem', err.message); });
+    return () => { cancelled = true; };
+  }, [aiStatus, working, embedded, showToast]);
+
+  useEffect(() => {
+    const client = samRef.current;
+    if (!client || !aiReady || seeds.length === 0) return;
+    let cancelled = false;
+    client
+      .decode(seeds.map((s) => ({ x: s.x, y: s.y, label: s.mode === 'add' ? 1 : 0 })))
+      .then((result) => { if (!cancelled) setAiResult(result); })
+      .catch((err) => { if (!cancelled) showToast('error', 'Erro na seleção com IA', err.message); });
+    return () => { cancelled = true; };
+  }, [aiReady, seeds, showToast]);
+
+  // The previous result stays on screen while the next click is decoded, avoiding a flicker
+  const aiMasks = aiActive && aiReady && seeds.length > 0 && aiResult && aiResult.width === working?.width
+    && aiResult.height === working?.height ? aiResult : null;
+
+  // SAM answers with three nested candidates; list them from smallest to largest
+  const aiCandidates = useMemo(() => {
+    if (!aiMasks) return [];
+    return aiMasks.masks
+      .map((mask, index) => {
+        let area = 0;
+        for (let i = 0; i < mask.length; i++) area += mask[i];
+        return { index, area: area / mask.length, score: aiMasks.scores[index] };
+      })
+      .sort((a, b) => a.area - b.area);
+  }, [aiMasks]);
+  const bestCandidate = aiCandidates.length
+    ? aiCandidates.reduce((best, c) => (c.score > best.score ? c : best)).index
+    : null;
+  const chosenCandidate = aiChoice ?? bestCandidate;
+
   const matte = useMemo(() => {
     if (!working || seeds.length === 0) return null;
+    if (aiActive) {
+      if (!aiMasks || chosenCandidate === null) return null;
+      return matteFromMask(working, aiMasks.masks[chosenCandidate], deferredOptions);
+    }
     return buildMatte(working, seeds, deferredOptions);
-  }, [working, seeds, deferredOptions]);
+  }, [working, seeds, deferredOptions, aiActive, aiMasks, chosenCandidate]);
+
+  const enableAi = async () => {
+    setSeeds([]);
+    if (samRef.current) {
+      setAiStatus('ready');
+      return;
+    }
+    setAiStatus('loading');
+    setAiProgress(0);
+    // Total size grows as each model file is discovered, so never let the bar move backwards
+    const client = new SamClient((fraction) => setAiProgress((prev) => Math.max(prev, fraction)));
+    samRef.current = client;
+    try {
+      setAiDevice(await client.whenReady());
+      setAiStatus('ready');
+    } catch (err) {
+      client.dispose();
+      samRef.current = null;
+      setAiStatus('error');
+      showToast('error', 'IA indisponível', err instanceof Error ? err.message : undefined);
+    }
+  };
+
+  const disableAi = () => {
+    setAiStatus('off');
+    setSeeds([]);
+  };
 
   const stats = useMemo(() => (working && matte ? regionStats(working, matte) : null), [working, matte]);
 
@@ -255,6 +353,12 @@ export const RecolorStudio: React.FC = () => {
     const x = (e.clientX - rect.left) / rect.width;
     const y = (e.clientY - rect.top) / rect.height;
     const mode = e.altKey ? 'subtract' : e.shiftKey ? 'add' : clickMode;
+    if (aiActive) {
+      setAiChoice(null);
+      setSeeds((prev) => [...prev, { x, y, mode }]);
+      if (view === 'original') setView('result');
+      return;
+    }
     // Each click keeps its own tolerance, so tuning one area never makes another leak
     let seedTolerance = tolerance;
     if (autoTolerance && mode === 'add' && analysisSource) {
@@ -537,18 +641,80 @@ export const RecolorStudio: React.FC = () => {
               <button onClick={() => setClickMode('add')} className={segmentedButton(clickMode === 'add')}>+ Adicionar</button>
               <button onClick={() => setClickMode('subtract')} className={segmentedButton(clickMode === 'subtract')}>− Remover</button>
             </div>
+            {/* AI selection */}
+            <div className="p-2.5 rounded-xl border border-[#D6D1F3] bg-[#F5F2FF] space-y-2">
+              {aiStatus === 'off' || aiStatus === 'error' ? (
+                <>
+                  <button
+                    onClick={enableAi}
+                    className="w-full flex items-center justify-center gap-1.5 py-1.5 bg-[#7655D9] hover:bg-[#5B3DB5] text-white rounded-lg text-xs font-semibold cursor-pointer transition-colors"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    {aiStatus === 'error' ? 'Tentar ativar a IA de novo' : 'Ativar seleção com IA'}
+                    <span className="text-[9px] font-bold bg-white/20 px-1.5 py-0.5 rounded">BETA</span>
+                  </button>
+                  <p className="text-[10px] text-[#62647A] leading-relaxed">
+                    Entende a forma do objeto, não só a cor: ideal para fundos parecidos com o produto.
+                    Baixa ~20 MB na primeira vez e roda no seu computador.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span className="flex items-center gap-1.5 font-semibold text-[#5B3DB5]">
+                      <Sparkles className="w-3.5 h-3.5" />
+                      {aiStatus === 'loading'
+                        ? `Baixando modelo… ${Math.round(aiProgress * 100)}%`
+                        : aiAnalyzing
+                          ? 'Analisando a imagem…'
+                          : `IA ativa · ${aiDevice === 'webgpu' ? 'GPU' : 'CPU'}`}
+                    </span>
+                    <button onClick={disableAi} className="text-[10px] font-semibold text-[#7655D9] hover:underline cursor-pointer">
+                      Usar seleção por cor
+                    </button>
+                  </div>
+                  {aiAnalyzing && (
+                    <p className="text-[10px] text-[#62647A] leading-relaxed">
+                      Feito uma vez por foto. Depois disso, cada clique responde rápido.
+                    </p>
+                  )}
+                  {aiStatus === 'loading' && (
+                    <div className="h-1.5 bg-white rounded-full overflow-hidden">
+                      <div className="h-full bg-[#7655D9] transition-all" style={{ width: `${Math.round(aiProgress * 100)}%` }} />
+                    </div>
+                  )}
+                  {aiCandidates.length > 1 && (
+                    <div className="grid grid-cols-3 gap-1">
+                      {aiCandidates.map((c, i) => (
+                        <button
+                          key={c.index}
+                          onClick={() => setAiChoice(c.index)}
+                          title={`${Math.round(c.area * 100)}% da imagem · confiança ${Math.round(c.score * 100)}%`}
+                          className={segmentedButton(c.index === chosenCandidate)}
+                        >
+                          {['Menor', 'Média', 'Maior'][i] ?? `#${i + 1}`}{c.index === bestCandidate ? ' ★' : ''}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
             <p className="text-[10px] text-[#85869A] leading-relaxed">
-              Clique no produto para selecioná-lo. Clique em sombras ou partes que ficaram de fora para somar.
-              Atalhos: Shift+clique adiciona, Alt+clique remove.
+              {aiActive
+                ? 'Clique no produto. Clique nas partes que faltaram para somar, ou use Remover no que entrou sem querer. ★ é a sugestão da IA.'
+                : 'Clique no produto para selecioná-lo. Clique em sombras ou partes que ficaram de fora para somar. Atalhos: Shift+clique adiciona, Alt+clique remove.'}
             </p>
-            {sliders.map(renderSlider)}
-            <label className="flex items-center justify-between text-xs text-[#62647A] cursor-pointer">
-              <span>Tolerância automática a cada clique</span>
-              <input
-                type="checkbox" checked={autoTolerance} onChange={(e) => setAutoTolerance(e.target.checked)}
-                className="w-4 h-4 accent-[#7655D9] rounded cursor-pointer"
-              />
-            </label>
+            {(aiActive ? sliders.slice(1) : sliders).map(renderSlider)}
+            {!aiActive && (
+              <label className="flex items-center justify-between text-xs text-[#62647A] cursor-pointer">
+                <span>Tolerância automática a cada clique</span>
+                <input
+                  type="checkbox" checked={autoTolerance} onChange={(e) => setAutoTolerance(e.target.checked)}
+                  className="w-4 h-4 accent-[#7655D9] rounded cursor-pointer"
+                />
+              </label>
+            )}
             <label className="flex items-center justify-between text-xs text-[#62647A] cursor-pointer">
               <span>Incluir áreas internas (brilhos, furos)</span>
               <input
@@ -556,13 +722,15 @@ export const RecolorStudio: React.FC = () => {
                 className="w-4 h-4 accent-[#7655D9] rounded cursor-pointer"
               />
             </label>
-            <label className="flex items-center justify-between text-xs text-[#62647A] cursor-pointer">
-              <span>Só áreas conectadas ao clique</span>
-              <input
-                type="checkbox" checked={contiguous} onChange={(e) => setContiguous(e.target.checked)}
-                className="w-4 h-4 accent-[#7655D9] rounded cursor-pointer"
-              />
-            </label>
+            {!aiActive && (
+              <label className="flex items-center justify-between text-xs text-[#62647A] cursor-pointer">
+                <span>Só áreas conectadas ao clique</span>
+                <input
+                  type="checkbox" checked={contiguous} onChange={(e) => setContiguous(e.target.checked)}
+                  className="w-4 h-4 accent-[#7655D9] rounded cursor-pointer"
+                />
+              </label>
+            )}
             {stats && (
               <div className="flex items-center gap-2.5 p-2.5 bg-[#F4F5FA] rounded-xl border border-[#E7E7F0]">
                 <div className="w-7 h-7 rounded-lg border border-[#E7E7F0] shrink-0" style={{ backgroundColor: stats.hex }} />
