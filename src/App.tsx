@@ -7,6 +7,7 @@ import { PatternShapeStudio } from './tools/pattern-shape/PatternShapeStudio';
 import { TextureLabStudio } from './tools/texture-lab/TextureLabStudio';
 import { TypeSystemStudio } from './tools/type-system/TypeSystemStudio';
 import { GlassStudio } from './tools/glass-studio/GlassStudio';
+import { RecolorStudio } from './tools/recolor/RecolorStudio';
 import { CommandPalette } from './components/CommandPalette';
 import { AboutModal } from './components/AboutModal';
 
@@ -41,6 +42,8 @@ const MainShell: React.FC = () => {
         return <TypeSystemStudio />;
       case 'glass':
         return <GlassStudio />;
+      case 'recolor':
+        return <RecolorStudio />;
       case 'hub':
       default:
         return <ChromalabHub onOpenAbout={() => setIsAboutOpen(true)} onOpenCommandPalette={() => setIsCommandPaletteOpen(true)} />;

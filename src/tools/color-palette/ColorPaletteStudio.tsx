@@ -12,6 +12,7 @@ import {
   SlidersHorizontal,
   Code2,
   X,
+  Pipette,
 } from 'lucide-react';
 import { useChromalab } from '../../context/ChromalabContext';
 import {
@@ -52,6 +53,7 @@ export const ColorPaletteStudio: React.FC = () => {
     savedPalettes,
     sendPaletteToMesh,
     sendPaletteToPattern,
+    sendPaletteToRecolor,
     showToast,
   } = useChromalab();
 
@@ -330,6 +332,15 @@ export const ColorPaletteStudio: React.FC = () => {
           >
             <Grid className="w-3.5 h-3.5 text-[#8EA5FF]" />
             <span className="hidden md:inline">Enviar para Patterns</span>
+          </button>
+
+          <button
+            onClick={() => sendPaletteToRecolor(slots.map((s) => s.hex))}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-[#F4F5FA] hover:bg-[#F5F2FF] text-[#17172A] border border-[#E7E7F0] hover:border-[#D6D1F3] rounded-lg text-xs font-medium transition-colors cursor-pointer"
+            title="Usar a paleta como variantes de cor no Recolor Studio"
+          >
+            <Pipette className="w-3.5 h-3.5 text-[#7655D9]" />
+            <span className="hidden md:inline">Enviar para Recolor</span>
           </button>
 
           <button
